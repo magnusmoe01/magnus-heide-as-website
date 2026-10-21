@@ -1,0 +1,53 @@
+:root {
+  --bg: #faf8f5;
+  --text: #1c1917;
+  --muted: #78716c;
+  --border: rgba(120, 113, 108, 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141210;
+    --text: #e7e5e4;
+    --muted: #a8a29e;
+    --border: rgba(168, 162, 158, 0.14);
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+.wrap {
+  width: min(660px, 90vw);
+  margin: 10vh auto 12vh;
+}
+
+h1 {
+  font-family: "Lora", Georgia, serif;
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 400;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+.org {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 13px;
+}
+.contact a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+  transition: color 120ms;
+}
+.contact a:hover { color: var(--text); }
