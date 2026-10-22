@@ -557,7 +557,10 @@ textarea { resize: vertical; }
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); text-align: right;
   }
   .g-tl-entry { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; align-items: start; }
-  .g-tl-side { display: grid; justify-items: end; gap: 6px; padding-top: 16px; text-align: right; }
+  .g-tl-side {
+    display: grid; justify-items: end; gap: 8px; padding: 12px 14px; text-align: right;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  }
   .g-tl-side:empty { display: none; }
   /* Prisen flyttes ut av hovedkortet (tillegg inni kortet beholder sin). */
   .g-tl-entry > .g-item > .g-item-head .r-item-right { display: none; }
