@@ -120,7 +120,10 @@ export function LabelTimeline({ runs }) {
           <span className={`r-ltl-label${r.labels.length ? "" : " r-ltl-undefined"}`}>
             {r.labels.join(" / ") || "Udefinert"}
           </span>
-          <span className="r-ltl-dates">{formatRange(r.start, r.end)}</span>
+          <span className="r-ltl-dates">
+            {formatRange(r.start, r.end)}
+            <span className="r-ltl-len"> · {r.len} {r.len === 1 ? "dag" : "dager"}</span>
+          </span>
         </div>
       ))}
     </div>

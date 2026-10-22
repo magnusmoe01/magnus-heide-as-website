@@ -638,3 +638,18 @@ textarea { resize: vertical; }
 }
 /* Tidslinjen starter rett under «Lukk alle dager». */
 .g-switch + .g-tl { margin-top: -6px; }
+
+/* Kategori-tidslinjen som liste på mobil. */
+.r-ltl-len { display: none; }
+@media (max-width: 760px) {
+  .r-ltl { grid-template-columns: 1fr !important; row-gap: 0; }
+  .r-ltl-run {
+    grid-column: auto !important; grid-template-columns: 6px minmax(0, 1fr) auto;
+    align-items: center; column-gap: 12px; padding: 7px 0; border-top: 1px solid var(--border);
+  }
+  .r-ltl-run:first-child { border-top: 0; }
+  .r-ltl-bar { grid-row: 1; grid-column: 1; flex-direction: column; width: 6px; height: 100%; min-height: 22px; border-radius: 3px; }
+  .r-ltl-label { grid-row: 1; grid-column: 2; font-size: 14px; white-space: normal; }
+  .r-ltl-dates { grid-row: 1; grid-column: 3; font-size: 13px; text-align: right; }
+  .r-ltl-len { display: inline; }
+}
