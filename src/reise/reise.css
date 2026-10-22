@@ -728,3 +728,18 @@ textarea { resize: vertical; }
 .g-transfer-box strong { font-weight: 500; }
 .g-transfer-box .g-muted { font-size: 13px; }
 .g-transfer-box .g-muted:empty { display: none; }
+
+/* ---------- Sirkel rundt ikoner ---------- */
+
+.r-icon {
+  display: inline-grid; place-items: center; width: 1.8em; height: 1.8em; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface); line-height: 1;
+  margin-right: 0.5em; vertical-align: middle; flex-shrink: 0;
+}
+img.r-icon-img { padding: 0; object-fit: cover; width: 1.8em; height: 1.8em; }
+.g-item h3 .r-icon, .r-item-title .r-icon, .g-tl-collapsed .r-icon { font-size: 1em; vertical-align: middle; }
+.g-item h3 .r-icon { margin-right: 10px; }
+/* Ikke sirkel der ikonet allerede står i en knapp eller sirkel. */
+.r-icon-btn .r-icon, .g-transfer-icon .r-icon, .r-btn .r-icon {
+  width: auto; height: auto; border: 0; background: none; margin: 0; display: inline;
+}
