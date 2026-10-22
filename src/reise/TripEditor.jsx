@@ -506,6 +506,7 @@ function ItemCard({
       <button className="r-item-main" onClick={onEdit}>
         <span className="r-item-head">
           <span className="r-item-title">
+            {item.image_url && <img className="r-thumb" src={item.image_url} alt="" loading="lazy" />}
             {isAddon && <span className="r-addon-mark">Tillegg</span>}
             <Icon value={item.icon} />
             {item.title}
@@ -521,7 +522,6 @@ function ItemCard({
           {[
             !isAddon && item.track === "stay" && `${item.nights || 1} ${item.nights > 1 ? "netter" : "natt"}`,
             item.links?.length > 0 && `${item.links.length} lenke${item.links.length > 1 ? "r" : ""}`,
-            item.image_url && "bilde",
           ]
             .filter(Boolean)
             .join(" · ")}

@@ -70,6 +70,7 @@ export default function Products() {
             <ul className="r-list">
               {list.map((p) => (
                 <li key={p.id} className="r-list-row">
+                  {p.image_url && <img className="r-thumb r-thumb-list" src={p.image_url} alt="" loading="lazy" />}
                   <button className="r-list-main" onClick={() => setEditing(p)}>
                     <strong><Icon value={p.icon} />{p.title}</strong>
                     <span className="r-muted">
