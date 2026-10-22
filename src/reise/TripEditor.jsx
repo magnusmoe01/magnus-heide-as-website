@@ -1,0 +1,467 @@
+import { useEffect, useMemo, useState } from "react";
+import ItemEditor from "./ItemEditor";
+import { supabase } from "./supabase";
+import { Modal, StatusBadge } from "./ui";
+import {
+  ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRACK_PLURAL, TRIP_STATUS,
+  continuingStays, formatDay, formatMoney, formatShort, isIncluded, itemTotal,
+  pick, slugify, sortItems, tripDays, tripUrl,
+} from "./util";
+
+const META_FIELDS = ["title", "client_name", "code", "start_date", "end_date", "intro", "admin_notes", "status"];
+
+export default function TripEditor({ id, onBack }) {
+  const [trip, setTrip] = useState(null);
+  const [draft, setDraft] = useState(null);
+  const [items, setItems] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [picking, setPicking] = useState(null);
+  const [error, setError] = useState("");
+  const [dragId, setDragId] = useState(null);
+  const [dropTarget, setDropTarget] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  async function load() {
+    const [t, i, p] = await Promise.all([
+      supabase.from("trips").select("*").eq("id", id).single(),
+      supabase.from("trip_items").select("*").eq("trip_id", id),
+      supabase.from("products").select("*").order("title"),
+    ]);
+    const err = t.error || i.error || p.error;
+    if (err) setError(err.message);
+    if (t.data) {
+      setTrip(t.data);
+      setDraft(pick(t.data, META_FIELDS));
+    }
+    setItems(i.data ?? []);
+    setProducts(p.data ?? []);
+  }
+
+  useEffect(() => {
+    load();
+  }, [id]);
+
+  const days = useMemo(() => (trip ? tripDays(trip, items) : []), [trip, items]);
+
+  if (!trip || !draft) return <p className="r-muted">{error || "Laster…"}</p>;
+
+  const dirty = META_FIELDS.some((k) => (draft[k] ?? "") !== (trip[k] ?? ""));
+  const setD = (k) => (e) => setDraft((d) => ({ ...d, [k]: e.target.value }));
+
+  async function saveMeta(e) {
+    e?.preventDefault();
+    const row = {
+      ...draft,
+      code: slugify(draft.code),
+      start_date: draft.start_date || null,
+      end_date: draft.end_date || null,
+    };
+    if (row.code.length < 4) return setError("Koden må ha minst 4 tegn (a–z, 0–9, -).");
+    const { data, error } = await supabase.from("trips").update(row).eq("id", id).select().single();
+    if (error) {
+      return setError(error.code === "23505" ? "Denne koden er allerede i bruk." : error.message);
+    }
+    setError("");
+    setTrip(data);
+    setDraft(pick(data, META_FIELDS));
+  }
+
+  async function patchItem(itemId, patch) {
+    setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, ...patch } : i)));
+    const { error } = await supabase.from("trip_items").update(patch).eq("id", itemId);
+    if (error) {
+      setError(error.message);
+      load();
+    }
+  }
+
+  async function insertItem(row) {
+    const { data, error } = await supabase
+      .from("trip_items")
+      .insert({ ...pick(row, ITEM_COLUMNS), trip_id: id })
+      .select()
+      .single();
+    if (error) return setError(error.message);
+    setItems((prev) => [...prev, data]);
+    return data;
+  }
+
+  async function saveItem(form) {
+    if (form.id) {
+      await patchItem(form.id, pick(form, ITEM_COLUMNS));
+    } else {
+      await insertItem(form);
+    }
+    setEditing(null);
+  }
+
+  function addFromProduct(p, target) {
+    setPicking(null);
+    insertItem({
+      ...pick(p, PRODUCT_COLUMNS),
+      product_id: p.id,
+      date: target.date,
+      nights: p.track === "stay" ? 1 : null,
+    });
+  }
+
+  function duplicate(item) {
+    insertItem({ ...item, sort: item.sort + 1 });
+  }
+
+  async function remove(item) {
+    if (!confirm(`Fjerne «${item.title}» fra reisen?`)) return;
+    setItems((prev) => prev.filter((i) => i.id !== item.id));
+    const { error } = await supabase.from("trip_items").delete().eq("id", item.id);
+    if (error) {
+      setError(error.message);
+      load();
+    }
+  }
+
+  async function saveToLibrary(item) {
+    const { data, error } = await supabase
+      .from("products")
+      .insert(pick(item, PRODUCT_COLUMNS))
+      .select()
+      .single();
+    if (error) return setError(error.message);
+    setProducts((prev) => [...prev, data]);
+    patchItem(item.id, { product_id: data.id });
+  }
+
+  function moveTo(itemId, date, track) {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+    const patch = { date };
+    if (track && track !== item.track) {
+      patch.track = track;
+      patch.nights = track === "stay" ? 1 : null;
+    }
+    if (patch.date !== item.date || patch.track) patchItem(itemId, patch);
+  }
+
+  function dropZone(date, track) {
+    const key = `${date ?? "none"}:${track}`;
+    return {
+      className: `r-cell${dropTarget === key ? " r-cell-over" : ""}`,
+      onDragOver: (e) => {
+        if (!dragId) return;
+        e.preventDefault();
+        setDropTarget(key);
+      },
+      onDragLeave: () => setDropTarget((k) => (k === key ? null : k)),
+      onDrop: (e) => {
+        e.preventDefault();
+        setDropTarget(null);
+        if (dragId) moveTo(dragId, date, track);
+        setDragId(null);
+      },
+    };
+  }
+
+  function renderCell(date, track) {
+    const list = items.filter((i) => i.date === date && i.track === track).sort(sortItems);
+    const continuing = date && track === "stay" ? continuingStays(items, date) : [];
+    return (
+      <div {...dropZone(date, track)}>
+        {continuing.map((s) => (
+          <div key={s.id} className="r-continuing">
+            ↳ {s.title}
+          </div>
+        ))}
+        {list.map((item) => (
+          <ItemCard
+            key={item.id}
+            item={item}
+            days={days}
+            currency={trip.currency}
+            onEdit={() => setEditing(item)}
+            onMove={(d) => moveTo(item.id, d || null)}
+            onDuplicate={() => duplicate(item)}
+            onRemove={() => remove(item)}
+            onSaveToLibrary={() => saveToLibrary(item)}
+            onResetResponse={() => patchItem(item.id, { guest_status: "pending", guest_comment: "" })}
+            onDragStart={() => setDragId(item.id)}
+            onDragEnd={() => {
+              setDragId(null);
+              setDropTarget(null);
+            }}
+          />
+        ))}
+        <button className="r-add" onClick={() => setPicking({ date, track })}>
+          + {TRACKS[track]}
+        </button>
+      </div>
+    );
+  }
+
+  const asked = items.filter((i) => i.ask_guest && !i.optional);
+  const answered = asked.filter((i) => i.guest_status !== "pending");
+  const extras = items.filter((i) => i.optional && i.guest_status === "accepted");
+  const total = items.filter(isIncluded).reduce((s, i) => s + itemTotal(i), 0);
+  const link = tripUrl(trip.code);
+
+  return (
+    <section>
+      <button className="r-btn r-btn-ghost r-back" onClick={onBack}>
+        ← Alle reiser
+      </button>
+      {error && <p className="r-error">{error}</p>}
+
+      <div className="r-editor-top">
+        <form className="r-form r-card" onSubmit={saveMeta}>
+          <div className="r-row">
+            <label className="r-grow">
+              Tittel
+              <input value={draft.title} onChange={setD("title")} />
+            </label>
+            <label className="r-grow">
+              Kunde
+              <input value={draft.client_name} onChange={setD("client_name")} />
+            </label>
+          </div>
+          <div className="r-row">
+            <label>
+              Fra
+              <input type="date" value={draft.start_date ?? ""} onChange={setD("start_date")} />
+            </label>
+            <label>
+              Til
+              <input type="date" value={draft.end_date ?? ""} onChange={setD("end_date")} />
+            </label>
+            <label className="r-grow">
+              Kode (URL)
+              <input value={draft.code} onChange={setD("code")} />
+            </label>
+            <label>
+              Status
+              <select value={draft.status} onChange={setD("status")}>
+                {Object.entries(TRIP_STATUS).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label>
+            Introduksjon til gjesten
+            <textarea rows={3} value={draft.intro} onChange={setD("intro")} />
+          </label>
+          <label>
+            Interne notater (vises ikke for gjesten)
+            <textarea rows={2} value={draft.admin_notes} onChange={setD("admin_notes")} />
+          </label>
+          <div className="r-actions">
+            <button className="r-btn r-btn-primary" disabled={!dirty}>
+              {dirty ? "Lagre endringer" : "Lagret"}
+            </button>
+          </div>
+        </form>
+
+        <aside className="r-card r-share">
+          <h2>Deling</h2>
+          {trip.status === "draft" && (
+            <p className="r-hint">Utkast – gjesten ser ikke reisen før status er «Delt med gjest».</p>
+          )}
+          {trip.status === "confirmed" && (
+            <p className="r-hint">Bekreftet – gjesten kan se, men ikke endre svar.</p>
+          )}
+          <code className="r-link">{link}</code>
+          <div className="r-row">
+            <button
+              className="r-btn r-btn-small"
+              onClick={() => {
+                navigator.clipboard.writeText(link);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+            >
+              {copied ? "Kopiert" : "Kopier lenke"}
+            </button>
+            <a className="r-btn r-btn-small" href={`/reise/${trip.code}`} target="_blank" rel="noopener">
+              Forhåndsvis
+            </a>
+          </div>
+
+          <h2>Svar fra gjesten</h2>
+          <p>
+            {answered.length} av {asked.length} punkter besvart
+            {extras.length > 0 && ` · ${extras.length} tillegg valgt`}
+          </p>
+          {total > 0 && <p>Totalt: <strong>{formatMoney(total, trip.currency)}</strong></p>}
+          {trip.guest_submitted_at ? (
+            <div className="r-guest-msg">
+              <span className="r-muted">
+                Sendt {new Date(trip.guest_submitted_at).toLocaleString("nb-NO")}
+              </span>
+              {trip.guest_message && <p>{trip.guest_message}</p>}
+            </div>
+          ) : (
+            <p className="r-muted">Gjesten har ikke sendt inn svar ennå.</p>
+          )}
+        </aside>
+      </div>
+
+      <div className="r-timeline">
+        <div className="r-tl-head">
+          <span>Dato</span>
+          <span>{TRACK_PLURAL.stay}</span>
+          <span>{TRACK_PLURAL.experience}</span>
+        </div>
+        {days.length === 0 && (
+          <p className="r-muted r-tl-empty">Sett fra- og til-dato for å få dager i tidslinjen.</p>
+        )}
+        {days.map((d) => {
+          const outside =
+            (trip.start_date && d < trip.start_date) || (trip.end_date && d > trip.end_date);
+          return (
+            <div className={`r-tl-row${outside ? " r-tl-outside" : ""}`} key={d}>
+              <div className="r-tl-date">
+                {formatDay(d)}
+                {outside && <span className="r-muted"> (utenfor reisen)</span>}
+              </div>
+              {renderCell(d, "stay")}
+              {renderCell(d, "experience")}
+            </div>
+          );
+        })}
+        <div className="r-tl-row r-tl-undated">
+          <div className="r-tl-date">
+            Uten dato
+            <span className="r-muted">Parkert eller tillegg uten fast dag</span>
+          </div>
+          {renderCell(null, "stay")}
+          {renderCell(null, "experience")}
+        </div>
+      </div>
+
+      {picking && (
+        <ProductPicker
+          products={products}
+          target={picking}
+          onPick={(p) => addFromProduct(p, picking)}
+          onBlank={() => {
+            setEditing({ track: picking.track, date: picking.date });
+            setPicking(null);
+          }}
+          onClose={() => setPicking(null)}
+        />
+      )}
+      {editing && (
+        <ItemEditor value={editing} mode="item" onSave={saveItem} onCancel={() => setEditing(null)} />
+      )}
+    </section>
+  );
+}
+
+function ItemCard({
+  item, days, currency, onEdit, onMove, onDuplicate, onRemove, onSaveToLibrary,
+  onResetResponse, onDragStart, onDragEnd,
+}) {
+  const price = itemTotal(item);
+  const dayOptions = item.date && !days.includes(item.date) ? [...days, item.date] : days;
+  return (
+    <div
+      className={`r-item${item.optional ? " r-item-optional" : ""}${
+        !isIncluded(item) ? " r-item-off" : ""
+      }`}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+    >
+      <button className="r-item-main" onClick={onEdit}>
+        <span className="r-item-title">
+          {item.time && <span className="r-time">{item.time}</span>}
+          {item.title}
+        </span>
+        <span className="r-muted">
+          {[
+            item.track === "stay" && `${item.nights || 1} ${item.nights > 1 ? "netter" : "natt"}`,
+            price > 0 && formatMoney(price, currency),
+            item.links?.length > 0 && `${item.links.length} lenke${item.links.length > 1 ? "r" : ""}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </span>
+      </button>
+      {(item.ask_guest || item.optional) && (
+        <div className="r-item-badges">
+          {item.optional && <span className="r-badge r-badge-extra">Tillegg</span>}
+          <StatusBadge status={item.guest_status} />
+          {item.guest_status !== "pending" && (
+            <button className="r-linkbtn" onClick={onResetResponse}>
+              nullstill
+            </button>
+          )}
+        </div>
+      )}
+      {item.guest_comment && <p className="r-comment">«{item.guest_comment}»</p>}
+      <div className="r-item-actions">
+        <select
+          value={item.date ?? ""}
+          onChange={(e) => onMove(e.target.value)}
+          aria-label="Flytt til dato"
+        >
+          {dayOptions.map((d) => (
+            <option key={d} value={d}>{formatShort(d)}</option>
+          ))}
+          <option value="">Uten dato</option>
+        </select>
+        <button className="r-linkbtn" onClick={onDuplicate}>Dupliser</button>
+        {!item.product_id && (
+          <button className="r-linkbtn" onClick={onSaveToLibrary}>Til bibliotek</button>
+        )}
+        <button className="r-linkbtn r-danger" onClick={onRemove}>Slett</button>
+      </div>
+    </div>
+  );
+}
+
+function ProductPicker({ products, target, onPick, onBlank, onClose }) {
+  const [q, setQ] = useState("");
+  const [all, setAll] = useState(false);
+  const list = products.filter(
+    (p) =>
+      (all || p.track === target.track) &&
+      (!q || `${p.title} ${p.location} ${p.description}`.toLowerCase().includes(q.toLowerCase()))
+  );
+  return (
+    <Modal
+      title={`Legg til ${TRACKS[target.track].toLowerCase()}${
+        target.date ? ` – ${formatShort(target.date)}` : ""
+      }`}
+      onClose={onClose}
+    >
+      <div className="r-row">
+        <input className="r-grow" placeholder="Søk i biblioteket…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+        <label className="r-inline">
+          <input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} /> Vis alle typer
+        </label>
+      </div>
+      <ul className="r-list r-picker">
+        {list.map((p) => (
+          <li key={p.id}>
+            <button className="r-list-main" onClick={() => onPick(p)}>
+              <strong>{p.title}</strong>
+              <span className="r-muted">
+                {[TRACKS[p.track], p.location, p.price !== null && `${formatMoney(p.price)} ${p.price_unit}`]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </button>
+          </li>
+        ))}
+        {list.length === 0 && <li className="r-muted">Ingen treff i biblioteket.</li>}
+      </ul>
+      <div className="r-actions">
+        <button className="r-btn r-btn-primary" onClick={onBlank}>
+          + Nytt element fra bunnen
+        </button>
+      </div>
+    </Modal>
+  );
+}
