@@ -493,7 +493,7 @@ textarea { resize: vertical; }
 
 .g-tl { position: relative; padding-left: 34px; display: grid; gap: 14px; }
 .g-tl::before {
-  content: ""; position: absolute; left: 11px; top: 14px; bottom: 14px; width: 2px;
+  content: ""; position: absolute; left: 11px; top: 0; bottom: 14px; width: 2px;
   background: var(--border); border-radius: 2px;
 }
 .g-tl-group { display: grid; gap: 10px; }
@@ -584,7 +584,7 @@ textarea { resize: vertical; }
 
 /* ---------- Lukk/åpne dager (gjest) ---------- */
 
-.g-switch { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; justify-self: start; margin-bottom: 4px; }
+.g-switch { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; justify-self: start; margin-bottom: 0; }
 .g-switch input { position: absolute; opacity: 0; pointer-events: none; }
 .g-switch-track {
   width: 36px; height: 20px; border-radius: 999px; background: var(--border); position: relative; transition: background 150ms;
@@ -636,3 +636,5 @@ textarea { resize: vertical; }
   .g-facts { font-size: 14px; }
   .g-facts a, .g-facts dd a { word-break: break-word; }
 }
+/* Tidslinjen starter rett under «Lukk alle dager». */
+.g-switch + .g-tl { margin-top: -6px; }
