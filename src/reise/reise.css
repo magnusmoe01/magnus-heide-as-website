@@ -665,6 +665,7 @@ textarea { resize: vertical; }
 .g-detail .g-img { width: 100%; margin: 0 0 4px; border-radius: 8px; }
 .g-detail .g-item-head h3 { display: none; }
 /* Litt større ikoner foran titler. */
-.g-item h3 .r-icon { font-size: 1.3em; vertical-align: -0.12em; }
-.r-item-title .r-icon { font-size: 1.2em; vertical-align: -0.1em; }
+.g-item h3 .r-icon { font-size: 1.3em; vertical-align: 0.02em; }
+.r-item-title .r-icon { font-size: 1.2em; vertical-align: 0.02em; }
 .g-tl-collapsed .r-icon { font-size: 1.15em; }
+.g-tl-collapsed .r-icon { vertical-align: 0.04em; }
