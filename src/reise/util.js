@@ -72,8 +72,20 @@ export function dateRange(start, end) {
 /** Datoene i reisen, pluss eventuelle datoer utenfor som har elementer. */
 export function tripDays(trip, items) {
   const set = new Set(dateRange(trip.start_date, trip.end_date));
-  for (const i of items) if (i.date) set.add(i.date);
+  for (const i of items) {
+    if (!i.date) continue;
+    set.add(i.date);
+    // Overnattinger tar med alle nettene og utsjekkdagen, også utenfor reisens datoer.
+    if (i.track === "stay" && !i.parent_id) {
+      for (let n = 1; n <= (i.nights || 1); n++) set.add(addDays(i.date, n));
+    }
+  }
   return [...set].sort();
+}
+
+/** Hvilken natt (1, 2, …) av oppholdet `day` er. */
+export function nightNumber(stay, day) {
+  return Math.round((Date.parse(day) - Date.parse(stay.date)) / 864e5) + 1;
 }
 
 /** Stabil fargetone per by/kategori. */

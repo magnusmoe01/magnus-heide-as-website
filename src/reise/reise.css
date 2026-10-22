@@ -681,3 +681,24 @@ textarea { resize: vertical; }
 .r-day-move button:hover:not(:disabled) { border-color: var(--muted); }
 .r-day-move button:disabled { opacity: 0.3; cursor: default; }
 @media (hover: none) { .r-day-move { opacity: 1; } }
+
+/* ---------- Overnatting over flere netter ---------- */
+
+.r-continuing {
+  display: grid; gap: 2px; text-align: left; font: inherit; color: var(--text); cursor: pointer;
+  background: var(--bg); border: 1px dashed var(--night-text); border-radius: 8px; padding: 6px 10px;
+  font-size: 13px;
+}
+.r-continuing:hover { border-style: solid; }
+.r-continuing .r-thumb { width: 32px; height: 32px; grid-row: span 2; }
+.r-continuing:has(.r-thumb) { grid-template-columns: 32px minmax(0, 1fr); column-gap: 10px; }
+.r-continuing-title { font-weight: 500; }
+
+.g-tl-night ~ .g-tl-entry .g-staying {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; cursor: pointer;
+  border: 1px solid var(--border);
+}
+.g-staying img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.g-staying > span { display: grid; gap: 2px; }
+.g-staying strong { font-weight: 500; }
+.g-staying .g-muted { font-size: 13px; }

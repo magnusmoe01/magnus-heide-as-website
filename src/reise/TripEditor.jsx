@@ -5,7 +5,7 @@ import { supabase } from "./supabase";
 import { ConvertedTotal, Icon, LabelTimeline, Modal, Money, PriceTag, StatusBadge, Tag } from "./ui";
 import {
   CONVERT_CURRENCIES, ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelRuns, paymentText, selectedOption, showPayment,
+  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelRuns, nightNumber, paymentText, selectedOption, showPayment,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
 
@@ -247,9 +247,16 @@ export default function TripEditor({ id, onBack }) {
     return (
       <div {...dropZone(date, track)}>
         {continuing.map((s) => (
-          <div key={s.id} className="r-continuing">
-            ↳ <Icon value={s.icon} />{s.title}
-          </div>
+          <button key={s.id} className="r-continuing" onClick={() => setEditing(s)}>
+            {s.image_url && <img className="r-thumb" src={s.image_url} alt="" loading="lazy" />}
+            <span className="r-continuing-title">
+              <Icon value={s.icon} />
+              {s.title}
+            </span>
+            <span className="r-muted r-small">
+              Natt {nightNumber(s, date)} av {s.nights || 1} · fortsetter fra {formatShort(s.date)}
+            </span>
+          </button>
         ))}
         {list.map((item) => (
           <Fragment key={item.id}>

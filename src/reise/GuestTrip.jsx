@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import { ConvertedTotal, Icon, LabelTimeline, Modal, Money, PriceTag, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
-  formatRange, formatShort, formatTime, endsNextDay, labelRuns, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
+  formatRange, formatShort, formatTime, endsNextDay, labelRuns, nightNumber, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
 } from "./util";
 import "./reise.css";
 
@@ -199,9 +199,19 @@ function Timeline({ trip, items, itemProps }) {
                 {stays.map((i) => entry(i))}
                 {staying.map((s) => (
                   <div className="g-tl-entry" key={s.id}>
-                    <p className="g-staying">
-                      {s.title} <span className="g-muted">· natt {nightNumber(s, d)} av {s.nights || 1}</span>
-                    </p>
+                    <button className="g-staying" onClick={() => setDetailId(s.id)}>
+                      {s.image_url && <img src={s.image_url} alt="" loading="lazy" />}
+                      <span>
+                        <strong>
+                          <Icon value={s.icon} />
+                          {s.title}
+                        </strong>
+                        <span className="g-muted">
+                          Natt {nightNumber(s, d)} av {s.nights || 1}
+                          {s.location && ` · ${s.location}`}
+                        </span>
+                      </span>
+                    </button>
                   </div>
                 ))}
               </section>
@@ -242,10 +252,6 @@ function AddonPrice({ item, currency }) {
       </span>
     </span>
   );
-}
-
-function nightNumber(stay, day) {
-  return Math.round((Date.parse(day) - Date.parse(stay.date)) / 864e5) + 1;
 }
 
 function TrackList({ items, itemProps, showTrack }) {
