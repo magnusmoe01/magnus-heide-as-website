@@ -97,6 +97,11 @@ export default function GuestTrip({ code }) {
 function Timeline({ trip, items, itemProps }) {
   const days = tripDays(trip, items);
   const undated = items.filter((i) => !i.date);
+  // «Lukk alle dager» er av som standard; enkeltdager kan åpnes/lukkes uansett.
+  const [collapseAll, setCollapseAll] = useState(false);
+  const [dayOpen, setDayOpen] = useState({});
+  const isOpen = (d) => dayOpen[d] ?? !collapseAll;
+  const toggleDay = (d) => setDayOpen((prev) => ({ ...prev, [d]: !isOpen(d) }));
   // Kort som henger på den vertikale tidslinjen.
   const entry = (i, extra) => (
     <div className="g-tl-entry" key={i.id}>
@@ -129,6 +134,19 @@ function Timeline({ trip, items, itemProps }) {
   );
   return (
     <div className="g-tl">
+      <label className="g-switch">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={collapseAll}
+          onChange={(e) => {
+            setCollapseAll(e.target.checked);
+            setDayOpen({});
+          }}
+        />
+        <span className="g-switch-track" aria-hidden="true" />
+        Lukk alle dager
+      </label>
       <div className="g-tl-header" aria-hidden="true">
         <span />
         <span>Pris og betaling</span>
@@ -138,17 +156,39 @@ function Timeline({ trip, items, itemProps }) {
         const experiences = dayItems.filter((i) => i.track === "experience");
         const stays = dayItems.filter((i) => i.track === "stay");
         const staying = continuingStays(items, d);
+        const open = isOpen(d);
+        const stayNames = [...stays, ...staying].map((s) => s.title);
         return (
           <Fragment key={d}>
             <section className="g-tl-group">
               <h2 className="g-tl-node g-tl-day">
-                {formatDay(d)}
+                <button className="g-tl-toggle" aria-expanded={open} onClick={() => toggleDay(d)}>
+                  <span className="g-tl-chevron" aria-hidden="true" />
+                  {formatDay(d)}
+                </button>
                 {(trip.day_labels?.[d] || []).map((l) => <Tag key={l} label={l} />)}
               </h2>
-              {experiences.map((i) => entry(i))}
-              {experiences.length === 0 && <p className="g-muted g-tl-empty">Ingen aktiviteter registrert</p>}
+              {open ? (
+                <>
+                  {experiences.map((i) => entry(i))}
+                  {experiences.length === 0 && (
+                    <p className="g-muted g-tl-empty">Ingen aktiviteter registrert</p>
+                  )}
+                </>
+              ) : (
+                <p className="g-muted g-tl-empty g-tl-collapsed">
+                  {[
+                    experiences.length
+                      ? `${experiences.length} ${experiences.length === 1 ? "aktivitet" : "aktiviteter"}`
+                      : "Ingen aktiviteter",
+                    stayNames.length && `Overnatting: ${stayNames.join(", ")}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )}
             </section>
-            {(stays.length > 0 || staying.length > 0) && (
+            {open && (stays.length > 0 || staying.length > 0) && (
               <section className="g-tl-group">
                 <h3 className="g-tl-node g-tl-night">{formatNight(d)}</h3>
                 {stays.map((i) => entry(i))}
