@@ -129,7 +129,7 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
         )}
 
         {isItem && (
-          <div className="r-row">
+          <div className="r-row r-timerow">
             <div className="r-segmented" role="radiogroup" aria-label="Tidspunkt">
               {[["time", "Klokkeslett"], ["allday", "Hele dagen"], ["none", "Ingen tid"]].map(([k, label]) => (
                 <button

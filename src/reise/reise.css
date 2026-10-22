@@ -468,3 +468,12 @@ textarea { resize: vertical; }
 }
 .r-segmented button:first-child { border-left: 0; }
 .r-segmented button[aria-checked="true"] { background: var(--surface-2); color: var(--text); font-weight: 500; }
+
+/* Tidsvalg og fra/til på én linje i redigeringsvinduet. */
+.r-timerow { flex-wrap: nowrap; }
+.r-timerow > label { flex: 0 1 112px; min-width: 0; }
+.r-timerow .r-segmented { flex: 0 0 auto; }
+.r-timerow .r-segmented button { padding: 7px 10px; }
+@media (max-width: 560px) {
+  .r-timerow { flex-wrap: wrap; }
+}
