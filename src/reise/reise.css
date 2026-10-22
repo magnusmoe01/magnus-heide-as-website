@@ -532,3 +532,5 @@ textarea { resize: vertical; }
   font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
 }
 .g-item-kicker:empty { display: none; }
+/* Mer luft rundt titlene på arrangementer og overnattinger. */
+.g-item h3 { margin: 6px 0 6px; }
