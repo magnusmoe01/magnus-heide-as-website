@@ -174,7 +174,7 @@ textarea { resize: vertical; }
 
 .r-item {
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 8px 10px; display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 12px; cursor: grab;
+  padding: 8px 10px; display: grid; grid-template-columns: 128px minmax(0, 1fr); column-gap: 14px; cursor: grab;
 }
 .r-item-time { font-size: 12px; line-height: 1.5; padding-top: 1px; color: var(--accent); font-variant-numeric: tabular-nums; }
 .r-item-time span { display: block; }
