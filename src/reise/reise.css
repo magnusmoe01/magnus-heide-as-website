@@ -559,7 +559,7 @@ textarea { resize: vertical; }
   .g-tl-entry { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; align-items: stretch; }
   .g-tl-side {
     display: grid; justify-items: end; align-content: start; gap: 8px; padding: 12px 14px; text-align: right;
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    background: transparent; border: 1px solid var(--border); border-radius: var(--radius);
   }
   .g-tl-side:empty { display: none; }
   /* Prisen flyttes ut av hovedkortet (tillegg inni kortet beholder sin). */
