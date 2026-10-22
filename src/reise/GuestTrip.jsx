@@ -301,7 +301,7 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
             </p>
           )}
           <p className="g-item-kicker">
-            {[when, showTrack && TRACKS[item.track], item.optional && !nested && "Tillegg"]
+            {[when, showTrack && TRACKS[item.track]]
               .filter(Boolean)
               .join(" · ")}
           </p>
