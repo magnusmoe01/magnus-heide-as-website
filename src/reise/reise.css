@@ -177,8 +177,8 @@ textarea { resize: vertical; }
   padding: 8px 10px; display: grid; grid-template-columns: 128px minmax(0, 1fr); column-gap: 14px; cursor: grab;
 }
 .r-item-time { font-size: 12px; line-height: 1.5; padding-top: 1px; color: var(--accent); font-variant-numeric: tabular-nums; }
-.r-item-time span { display: block; }
-.r-item-time .r-next-day { font-size: 11px; color: var(--muted); }
+.r-item-time span { display: inline; }
+.r-item-time .r-next-day { display: block; font-size: 11px; color: var(--muted); }
 .r-item-body { display: grid; gap: 6px; min-width: 0; }
 .r-item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .r-item-price { font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
