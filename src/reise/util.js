@@ -83,21 +83,6 @@ export function tagHue(label) {
   return h;
 }
 
-/** Antall dager per by/kategori. En dag med to kategorier teller i begge. */
-export function labelSummary(trip, items) {
-  const labels = trip.day_labels || {};
-  const days = tripDays(trip, items);
-  const counts = new Map();
-  let unlabeled = 0;
-  for (const d of days) {
-    const list = labels[d] || [];
-    if (list.length === 0) unlabeled++;
-    for (const l of list) counts.set(l, (counts.get(l) || 0) + 1);
-  }
-  const rows = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "nb"));
-  return { rows, unlabeled, total: days.length };
-}
-
 /** Sammenhengende perioder med samme by/kategori, i datorekkefølge. */
 export function labelRuns(trip, items) {
   const labels = trip.day_labels || {};

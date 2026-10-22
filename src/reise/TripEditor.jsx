@@ -2,10 +2,10 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import ItemEditor from "./ItemEditor";
 import { findOrCreateProduct } from "./library";
 import { supabase } from "./supabase";
-import { ConvertedTotal, Icon, LabelOverview, Modal, PriceTag, StatusBadge, Tag } from "./ui";
+import { ConvertedTotal, Icon, LabelTimeline, Modal, PriceTag, StatusBadge, Tag } from "./ui";
 import {
   CONVERT_CURRENCIES, ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatNight, formatShort, formatTime, endsNextDay, customIcons, isIncluded, itemTotal, labelSummary, paymentText, selectedOption, showPayment,
+  continuingStays, formatDay, formatMoney, formatNight, formatShort, formatTime, endsNextDay, customIcons, isIncluded, itemTotal, labelRuns, paymentText, selectedOption, showPayment,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
 
@@ -381,7 +381,7 @@ export default function TripEditor({ id, onBack }) {
       <DayLabelPanel
         days={days}
         labels={allLabels}
-        summary={labelSummary(trip, items)}
+        runs={labelRuns(trip, items)}
         onAdd={(range, label) => addLabel(range, label)}
         onRemove={(range, label) => removeLabel(range, label)}
       />
@@ -654,7 +654,8 @@ function ProductPicker({ products, target, onPick, onBlank, onClose }) {
   );
 }
 
-function DayLabelPanel({ days, labels, summary, onAdd, onRemove }) {
+function DayLabelPanel({ days, labels, runs, onAdd, onRemove }) {
+  const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -669,48 +670,59 @@ function DayLabelPanel({ days, labels, summary, onAdd, onRemove }) {
 
   return (
     <div className="r-card r-labels">
-      <div>
+      <div className="r-labels-head">
         <h2>Byer og kategorier</h2>
-        <form
-          className="r-row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            apply(onAdd);
-          }}
-        >
-          <label className="r-grow">
-            By / kategori
-            <input list="r-day-labels" value={label} onChange={(e) => setLabel(e.target.value)} />
-          </label>
-          <label>
-            Fra
-            <select value={from} onChange={(e) => setFrom(e.target.value)}>
-              <option value="">Første dag</option>
-              {days.map((d) => (
-                <option key={d} value={d}>{formatShort(d)}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Til
-            <select value={to} onChange={(e) => setTo(e.target.value)}>
-              <option value="">{from ? "Samme dag" : "Siste dag"}</option>
-              {days.map((d) => (
-                <option key={d} value={d}>{formatShort(d)}</option>
-              ))}
-            </select>
-          </label>
-          <button className="r-btn r-btn-primary" disabled={!label.trim() || !range.length}>
-            Tilordne {range.length > 0 && `(${range.length})`}
-          </button>
-          {labels.includes(label.trim()) && (
-            <button type="button" className="r-btn" onClick={() => apply(onRemove)}>
-              Fjern
-            </button>
-          )}
-        </form>
+        <button className="r-linkbtn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {open ? "Skjul" : "Tilordne for en periode…"}
+        </button>
       </div>
-      <LabelOverview summary={summary} />
+      {runs.some((r) => r.labels.length) ? (
+        <LabelTimeline runs={runs} />
+      ) : (
+        <p className="r-muted r-small r-flush">
+          Ingen byer eller kategorier ennå. Bruk + ved datoene i planen, eller tilordne for en periode.
+        </p>
+      )}
+      {open && (
+          <form
+            className="r-row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              apply(onAdd);
+            }}
+          >
+            <label className="r-grow">
+              By / kategori
+              <input list="r-day-labels" value={label} onChange={(e) => setLabel(e.target.value)} />
+            </label>
+            <label>
+              Fra
+              <select value={from} onChange={(e) => setFrom(e.target.value)}>
+                <option value="">Første dag</option>
+                {days.map((d) => (
+                  <option key={d} value={d}>{formatShort(d)}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Til
+              <select value={to} onChange={(e) => setTo(e.target.value)}>
+                <option value="">{from ? "Samme dag" : "Siste dag"}</option>
+                {days.map((d) => (
+                  <option key={d} value={d}>{formatShort(d)}</option>
+                ))}
+              </select>
+            </label>
+            <button className="r-btn r-btn-primary" disabled={!label.trim() || !range.length}>
+              Tilordne {range.length > 0 && `(${range.length})`}
+            </button>
+            {labels.includes(label.trim()) && (
+              <button type="button" className="r-btn" onClick={() => apply(onRemove)}>
+                Fjern
+              </button>
+            )}
+          </form>
+      )}
     </div>
   );
 }

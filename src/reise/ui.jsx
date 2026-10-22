@@ -108,7 +108,7 @@ export function LabelTimeline({ runs }) {
           key={r.start}
           className="r-ltl-run"
           style={{ gridColumn: `span ${r.len}` }}
-          title={`${r.labels.join(" / ") || "Uten kategori"}: ${formatRange(r.start, r.end)}`}
+          title={`${r.labels.join(" / ") || "Udefinert"}: ${formatRange(r.start, r.end)}`}
         >
           <div className="r-ltl-bar">
             {r.labels.length ? (
@@ -117,35 +117,12 @@ export function LabelTimeline({ runs }) {
               <span className="r-ltl-none" />
             )}
           </div>
-          <span className="r-ltl-label">{r.labels.join(" / ")}</span>
+          <span className={`r-ltl-label${r.labels.length ? "" : " r-ltl-undefined"}`}>
+            {r.labels.join(" / ") || "Udefinert"}
+          </span>
           <span className="r-ltl-dates">{formatRange(r.start, r.end)}</span>
         </div>
       ))}
-    </div>
-  );
-}
-
-export function LabelOverview({ summary }) {
-  const { rows, unlabeled, total } = summary;
-  if (rows.length === 0) return null;
-  const dager = (n) => `${n} ${n === 1 ? "dag" : "dager"}`;
-  return (
-    <div className="r-overview">
-      <div className="r-overview-bar" aria-hidden="true">
-        {rows.map(([label, n]) => (
-          <span key={label} style={{ "--h": tagHue(label), flexGrow: n }} />
-        ))}
-        {unlabeled > 0 && <span className="r-overview-none" style={{ flexGrow: unlabeled }} />}
-      </div>
-      <ul>
-        {rows.map(([label, n]) => (
-          <li key={label}>
-            <Tag label={label} /> {dager(n)}
-          </li>
-        ))}
-        {unlabeled > 0 && <li className="r-muted">Uten kategori: {dager(unlabeled)}</li>}
-        <li className="r-muted">Totalt {dager(total)}</li>
-      </ul>
     </div>
   );
 }

@@ -338,22 +338,17 @@ textarea { resize: vertical; }
 }
 .r-tag-add:hover { color: var(--text); border-color: var(--muted); }
 .r-app .r-tag-input { font-size: 12px; padding: 2px 8px; width: 130px; border-radius: 999px; }
-.r-labels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 24px; margin-bottom: 16px; }
-.r-labels h2 { margin-bottom: 8px; }
-.r-overview { display: grid; gap: 8px; font-size: 13px; align-content: start; }
-.r-overview-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; }
-.r-overview-bar span { flex: 1 1 0; background: hsl(var(--h) 50% 60%); }
-.r-overview-bar .r-overview-none { background: var(--border); }
-.r-overview ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
-.g-hero .r-overview { margin-top: 20px; }
+.r-labels { display: grid; gap: 4px; margin-bottom: 16px; }
+.r-labels-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.r-labels-head h2 { margin: 0; }
+.r-labels .r-ltl { margin-top: 8px; max-width: none; }
+.r-labels form { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
 .g-day h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 @media (prefers-color-scheme: dark) {
   .r-tag { background: hsl(var(--h) 30% 24%); color: hsl(var(--h) 60% 82%); }
-  .r-overview-bar span { background: hsl(var(--h) 45% 55%); }
 }
 @media (max-width: 900px) {
-  .r-labels { grid-template-columns: 1fr; }
 }
 
 /* ---------- Overnatting mellom dager ---------- */
@@ -392,6 +387,7 @@ textarea { resize: vertical; }
 .r-ltl-label, .r-ltl-dates { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .r-ltl-label { font-weight: 500; }
 .r-ltl-dates { color: var(--muted); }
+.r-ltl-undefined { font-weight: 400; font-style: italic; color: var(--muted); }
 @media (prefers-color-scheme: dark) {
   .r-ltl-bar span { background: hsl(var(--h) 45% 55%); }
 }
