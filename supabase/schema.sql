@@ -87,6 +87,16 @@ alter table public.trip_items add column if not exists all_day boolean not null 
 -- By/kategori per dato: {"2026-11-02": ["Oslo"], ...}
 alter table public.trips add column if not exists day_labels jsonb not null default '{}';
 
+-- Tilleggsvalg med valgmuligheter, og betalingsstatus
+alter table public.trip_items add column if not exists options jsonb not null default '[]';
+alter table public.trip_items add column if not exists guest_option text not null default '';
+alter table public.trip_items add column if not exists paid boolean not null default false;
+alter table public.trip_items add column if not exists refundable boolean not null default false;
+alter table public.trip_items add column if not exists refundable_until date;
+
+-- Tillegg som hører til et arrangement / en overnatting
+alter table public.trip_items add column if not exists parent_id uuid references public.trip_items on delete cascade;
+
 -- Bilder
 alter table public.products add column if not exists image_url text not null default '';
 alter table public.trip_items add column if not exists image_url text not null default '';
@@ -135,8 +145,9 @@ language sql stable security definer set search_path = public as $$
     and (t.status in ('shared', 'confirmed') or public.is_admin());
 $$;
 
+drop function if exists public.guest_respond(text, uuid, text, text);
 create or replace function public.guest_respond(
-  p_code text, p_item_id uuid, p_status text, p_comment text
+  p_code text, p_item_id uuid, p_status text, p_comment text, p_option text default ''
 ) returns void
 language plpgsql security definer set search_path = public as $$
 begin
@@ -146,11 +157,14 @@ begin
   update trip_items i
      set guest_status = p_status,
          guest_comment = left(coalesce(p_comment, ''), 2000),
+         guest_option = case when p_status = 'accepted' then coalesce(p_option, '') else '' end,
          guest_updated_at = now()
     from trips t
    where i.id = p_item_id and i.trip_id = t.id
      and t.code = lower(p_code) and t.status = 'shared'
-     and (i.ask_guest or i.optional);
+     and (i.ask_guest or i.optional)
+     and (coalesce(p_option, '') = ''
+          or (i.optional and i.options @> jsonb_build_array(jsonb_build_object('id', p_option))));
   if not found then
     raise exception 'Kan ikke oppdatere dette punktet';
   end if;
@@ -189,7 +203,7 @@ language sql security definer set search_path = public as $$
 $$;
 
 grant execute on function public.get_trip_by_code(text) to anon, authenticated;
-grant execute on function public.guest_respond(text, uuid, text, text) to anon, authenticated;
+grant execute on function public.guest_respond(text, uuid, text, text, text) to anon, authenticated;
 grant execute on function public.guest_submit(text, text) to anon, authenticated;
 grant execute on function public.keepalive() to anon, authenticated;
 grant execute on function public.is_admin() to authenticated;

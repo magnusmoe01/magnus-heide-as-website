@@ -2,12 +2,14 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import ItemEditor from "./ItemEditor";
 import { findOrCreateProduct } from "./library";
 import { supabase } from "./supabase";
-import { ConvertedTotal, Icon, LabelOverview, Modal, StatusBadge, Tag } from "./ui";
+import { ConvertedTotal, Icon, LabelOverview, Modal, PriceTag, StatusBadge, Tag } from "./ui";
 import {
   CONVERT_CURRENCIES, ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelSummary,
+  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelSummary, paymentText, selectedOption, showPayment,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
+
+const NOT_OPTIONAL = { optional: false, options: [], guest_status: "pending", guest_option: "" };
 
 const META_FIELDS = [
   "title", "client_name", "code", "start_date", "end_date", "intro", "admin_notes", "status", "currency",
@@ -103,7 +105,10 @@ export default function TripEditor({ id, onBack }) {
 
   async function saveItem(form) {
     if (form.id) {
-      await patchItem(form.id, pick(form, ITEM_COLUMNS));
+      const patch = pick(form, ITEM_COLUMNS);
+      // Fjernes avhukingen for tilleggsvalg, nullstilles gjestens svar på tillegget.
+      if (editing.optional && !form.optional) Object.assign(patch, NOT_OPTIONAL);
+      await patchItem(form.id, patch);
     } else {
       await insertItem(form);
     }
@@ -120,13 +125,18 @@ export default function TripEditor({ id, onBack }) {
     });
   }
 
-  function duplicate(item) {
-    insertItem({ ...item, sort: item.sort + 1 });
+  async function duplicate(item) {
+    const copy = await insertItem({ ...item, sort: item.sort + 1 });
+    if (!copy) return;
+    for (const addon of items.filter((i) => i.parent_id === item.id)) {
+      await insertItem({ ...addon, parent_id: copy.id });
+    }
   }
 
   async function remove(item) {
     if (!confirm(`Fjerne «${item.title}» fra reisen?`)) return;
-    setItems((prev) => prev.filter((i) => i.id !== item.id));
+    // Tillegg under elementet slettes også (on delete cascade).
+    setItems((prev) => prev.filter((i) => i.id !== item.id && i.parent_id !== item.id));
     const { error } = await supabase.from("trip_items").delete().eq("id", item.id);
     if (error) {
       setError(error.message);
@@ -173,7 +183,12 @@ export default function TripEditor({ id, onBack }) {
       patch.track = track;
       patch.nights = track === "stay" ? 1 : null;
     }
-    if (patch.date !== item.date || patch.track) patchItem(itemId, patch);
+    if (patch.date === item.date && !patch.track) return;
+    patchItem(itemId, patch);
+    // Tilleggene følger elementet de hører til.
+    for (const addon of items.filter((i) => i.parent_id === itemId)) {
+      patchItem(addon.id, { date, track: patch.track ?? addon.track });
+    }
   }
 
   function dropZone(date, track) {
@@ -196,7 +211,9 @@ export default function TripEditor({ id, onBack }) {
   }
 
   function renderCell(date, track) {
-    const list = items.filter((i) => i.date === date && i.track === track).sort(sortItems);
+    const list = items
+      .filter((i) => i.date === date && i.track === track && !i.parent_id)
+      .sort(sortItems);
     const continuing = date && track === "stay" ? continuingStays(items, date) : [];
     return (
       <div {...dropZone(date, track)}>
@@ -212,7 +229,19 @@ export default function TripEditor({ id, onBack }) {
             onEdit={() => setEditing(item)}
             onDuplicate={() => duplicate(item)}
             onRemove={() => remove(item)}
-            onResetResponse={() => patchItem(item.id, { guest_status: "pending", guest_comment: "" })}
+            onResetResponse={() =>
+              patchItem(item.id, { guest_status: "pending", guest_comment: "", guest_option: "" })
+            }
+            onRemoveOptional={() => patchItem(item.id, NOT_OPTIONAL)}
+            addons={items.filter((i) => i.parent_id === item.id).sort(sortItems)}
+            onAddAddon={() =>
+              setEditing({ parent_id: item.id, track: item.track, date: item.date, optional: true })
+            }
+            onEditAddon={(addon) => setEditing(addon)}
+            onRemoveAddon={(addon) => remove(addon)}
+            onResetAddon={(addon) =>
+              patchItem(addon.id, { guest_status: "pending", guest_comment: "", guest_option: "" })
+            }
             onDragStart={() => setDragId(item.id)}
             onDragEnd={() => {
               setDragId(null);
@@ -370,7 +399,7 @@ export default function TripEditor({ id, onBack }) {
           const outside =
             (trip.start_date && d < trip.start_date) || (trip.end_date && d > trip.end_date);
           const isLast = idx === days.length - 1;
-          const hasStay = items.some((i) => i.track === "stay" && i.date === d) ||
+          const hasStay = items.some((i) => i.track === "stay" && i.date === d && !i.parent_id) ||
             continuingStays(items, d).length > 0;
           return (
             <Fragment key={d}>
@@ -432,10 +461,10 @@ export default function TripEditor({ id, onBack }) {
 }
 
 function ItemCard({
-  item, onEdit, onDuplicate, onRemove,
+  item, onEdit, onDuplicate, onRemove, onRemoveOptional,
   onResetResponse, onDragStart, onDragEnd,
+  addons, onAddAddon, onEditAddon, onRemoveAddon, onResetAddon,
 }) {
-  const price = itemTotal(item);
   return (
     <div
       className={`r-item${item.optional ? " r-item-optional" : ""}${
@@ -464,7 +493,7 @@ function ItemCard({
             <Icon value={item.icon} />
             {item.title}
           </span>
-          {price > 0 && <span className="r-item-price">{formatMoney(price)}</span>}
+          <PriceTag item={item} className="r-item-price" />
         </span>
         <span className="r-muted">
           {[
@@ -476,20 +505,66 @@ function ItemCard({
             .join(" · ")}
         </span>
       </button>
-      {(item.ask_guest || item.optional) && (
-        <div className="r-item-badges">
-          {item.optional && <span className="r-badge r-badge-extra">Tillegg</span>}
-          <StatusBadge status={item.guest_status} />
-          {item.guest_status !== "pending" && (
-            <button className="r-linkbtn" onClick={onResetResponse}>
-              nullstill
-            </button>
-          )}
-        </div>
+      <div className="r-item-badges">
+        {item.optional && <span className="r-badge r-badge-extra">Tillegg</span>}
+        {(item.ask_guest || item.optional) && <StatusBadge status={item.guest_status} />}
+        {(item.ask_guest || item.optional) && item.guest_status !== "pending" && (
+          <button className="r-linkbtn" onClick={onResetResponse}>
+            nullstill
+          </button>
+        )}
+        {showPayment(item) && (
+          <span className={`r-badge ${item.paid ? "r-status-accepted" : "r-status-question"}`}>
+            {paymentText(item)}
+          </span>
+        )}
+      </div>
+      {selectedOption(item) && <p className="r-comment">Valgt: {selectedOption(item).title}</p>}
+      {item.optional && item.options?.length > 0 && !selectedOption(item) && (
+        <p className="r-muted r-small r-flush">{item.options.length} valgmuligheter</p>
       )}
       {item.guest_comment && <p className="r-comment">«{item.guest_comment}»</p>}
+      {addons.length > 0 && (
+        <div className="r-addons">
+          <span className="r-addons-label">Tillegg gjesten kan velge</span>
+          {addons.map((a) => (
+            <div key={a.id} className={`r-addon${isIncluded(a) ? "" : " r-item-off"}`}>
+              <button className="r-item-main" onClick={() => onEditAddon(a)}>
+                <span className="r-item-head">
+                  <span className="r-item-title">
+                    <Icon value={a.icon} />
+                    {a.title}
+                  </span>
+                  <PriceTag item={a} className="r-item-price" />
+                </span>
+              </button>
+              <div className="r-item-badges">
+                <StatusBadge status={a.guest_status} />
+                {selectedOption(a) && <span className="r-badge">Valgt: {selectedOption(a).title}</span>}
+                {!selectedOption(a) && a.options?.length > 0 && (
+                  <span className="r-muted r-small">{a.options.length} valg</span>
+                )}
+                {showPayment(a) && (
+                  <span className={`r-badge ${a.paid ? "r-status-accepted" : "r-status-question"}`}>
+                    {paymentText(a)}
+                  </span>
+                )}
+                {a.guest_status !== "pending" && (
+                  <button className="r-linkbtn" onClick={() => onResetAddon(a)}>nullstill</button>
+                )}
+                <button className="r-linkbtn r-danger" onClick={() => onRemoveAddon(a)}>Slett</button>
+              </div>
+              {a.guest_comment && <p className="r-comment">«{a.guest_comment}»</p>}
+            </div>
+          ))}
+        </div>
+      )}
       <div className="r-item-actions">
+        <button className="r-linkbtn" onClick={onAddAddon}>+ Tillegg</button>
         <button className="r-linkbtn" onClick={onDuplicate}>Dupliser</button>
+        {item.optional && (
+          <button className="r-linkbtn" onClick={onRemoveOptional}>Ikke tillegg</button>
+        )}
         <button className="r-linkbtn r-danger" onClick={onRemove}>Slett</button>
       </div>
       </div>

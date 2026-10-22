@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { GUEST_STATUS, ICONS, PRICE_CURRENCY, formatMoney, formatRange, tagHue } from "./util";
+import {
+  GUEST_STATUS, ICONS, PRICE_CURRENCY, formatMoney, formatRange, itemTotal, priceBreakdown, tagHue,
+} from "./util";
 
 export function Modal({ title, onClose, children, wide }) {
   useEffect(() => {
@@ -30,6 +32,25 @@ export function Icon({ value }) {
   if (preset) return <span className="r-icon" title={preset[1]}>{preset[0]}</span>;
   if (/^https?:\/\//.test(value)) return <img className="r-icon r-icon-img" src={value} alt="" />;
   return <span className="r-icon">{value}</span>;
+}
+
+/** Pris for et element: enhetspris × antall og sum, eller bare summen. */
+export function PriceTag({ item, className }) {
+  const total = itemTotal(item);
+  if (total <= 0) return null;
+  const breakdown = priceBreakdown(item);
+  return (
+    <span className={`r-pricetag ${className || ""}`}>
+      {breakdown ? (
+        <>
+          {breakdown}
+          <small>= {formatMoney(total)}</small>
+        </>
+      ) : (
+        formatMoney(total)
+      )}
+    </span>
+  );
 }
 
 export function StatusBadge({ status }) {

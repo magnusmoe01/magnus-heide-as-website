@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { ConvertedTotal, Icon, LabelTimeline, NotConfigured, Tag, usePageMeta } from "./ui";
+import { ConvertedTotal, Icon, LabelTimeline, PriceTag, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
-  formatRange, formatShort, formatTime, labelRuns, isIncluded, itemTotal, linkLabel, mapsUrl, sortItems, telHref, tripDays,
+  formatRange, formatShort, formatTime, labelRuns, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
 } from "./util";
 import "./reise.css";
 
@@ -34,14 +34,27 @@ export default function GuestTrip({ code }) {
     setData((d) => ({ ...d, items: d.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) }));
   const setTrip = (patch) => setData((d) => ({ ...d, trip: { ...d.trip, ...patch } }));
 
-  const itemProps = { code, editable, onChange: updateItem };
+  const addonsFor = (item) => items.filter((i) => i.parent_id === item.id).sort(sortItems);
+  const itemProps = { code, editable, onChange: updateItem, addonsFor };
+  const topLevel = items.filter((i) => !i.parent_id);
   const optional = items.filter((i) => i.optional);
+  // Tillegg-fanen: frittstående tillegg og elementer som har tillegg under seg.
+  const withExtras = topLevel.filter((i) => i.optional || addonsFor(i).length > 0);
   const tabs = [
     ["timeline", "Tidslinje"],
     ["stay", TRACK_PLURAL.stay],
     ["experience", TRACK_PLURAL.experience],
     ...(optional.length ? [["extras", `Tillegg (${optional.length})`]] : []),
+    ["summary", "Oppsummering"],
   ];
+  const toSummary = editable && tab !== "summary" && (
+    <button className="g-btn g-btn-block g-to-summary" onClick={() => {
+      setTab("summary");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }}>
+      Gå til oppsummering og send svar →
+    </button>
+  );
 
   return (
     <div className="g-page">
@@ -62,21 +75,22 @@ export default function GuestTrip({ code }) {
         ))}
       </nav>
 
-      <div className="g-layout">
-        <main className="g-main">
-          {tab === "timeline" && <Timeline trip={trip} items={items} itemProps={itemProps} />}
+      <main className="g-main">
+          {tab === "timeline" && <Timeline trip={trip} items={topLevel} itemProps={itemProps} />}
           {(tab === "stay" || tab === "experience") && (
-            <TrackList items={items.filter((i) => i.track === tab)} itemProps={itemProps} />
+            <TrackList items={topLevel.filter((i) => i.track === tab)} itemProps={itemProps} />
           )}
           {tab === "extras" && (
             <>
               <p className="g-muted">Valgfrie tillegg du kan legge til reisen.</p>
-              <TrackList items={optional} itemProps={itemProps} showTrack />
+              <TrackList items={withExtras} itemProps={itemProps} showTrack />
             </>
           )}
-        </main>
-        <Summary trip={trip} items={items} code={code} editable={editable} onSubmitted={setTrip} />
-      </div>
+          {tab === "summary" && (
+            <Summary trip={trip} items={items} code={code} editable={editable} onSubmitted={setTrip} />
+          )}
+          {toSummary}
+      </main>
     </div>
   );
 }
@@ -139,26 +153,32 @@ function TrackList({ items, itemProps, showTrack }) {
   ));
 }
 
-function GuestItem({ item, code, editable, onChange, showDate, showTrack }) {
+function GuestItem({ item, code, editable, onChange, addonsFor, showDate, showTrack, nested }) {
+  const addons = nested ? [] : addonsFor(item);
   const [comment, setComment] = useState(item.guest_comment || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const respondable = item.ask_guest || item.optional;
-  const price = itemTotal(item);
+  const hasOptions = item.options?.length > 0;
+  const chosen = selectedOption(item);
   const tel = item.contact && telHref(item.contact);
 
-  async function respond(status) {
+  async function respond(status, option = "") {
     if (status === "question" && !comment.trim()) {
       return setError("Skriv spørsmålet ditt i feltet under.");
     }
     setSaving(true);
     setError("");
     const { error } = await supabase.rpc("guest_respond", {
-      p_code: code, p_item_id: item.id, p_status: status, p_comment: comment,
+      p_code: code, p_item_id: item.id, p_status: status, p_comment: comment, p_option: option,
     });
     setSaving(false);
     if (error) return setError("Kunne ikke lagre. Prøv igjen.");
-    onChange(item.id, { guest_status: status, guest_comment: comment });
+    onChange(item.id, {
+      guest_status: status,
+      guest_comment: comment,
+      guest_option: status === "accepted" ? option : "",
+    });
   }
 
   const when =
@@ -173,6 +193,8 @@ function GuestItem({ item, code, editable, onChange, showDate, showTrack }) {
   return (
     <article
       className={`g-item g-${item.track} g-st-${item.guest_status}${item.optional ? " g-optional" : ""}${
+        nested ? " g-nested" : ""
+      }${
         isIncluded(item) ? "" : " g-off"
       }`}
     >
@@ -189,10 +211,14 @@ function GuestItem({ item, code, editable, onChange, showDate, showTrack }) {
             {item.title}
           </h3>
         </div>
-        {price > 0 && <span className="g-price">{formatMoney(price)}</span>}
+        <PriceTag item={item} className="g-price" />
       </div>
 
       {item.description && <p className="g-desc">{item.description}</p>}
+
+      {showPayment(item) && (
+        <p className={`g-pay${item.paid ? " g-pay-paid" : ""}`}>{paymentText(item)}</p>
+      )}
 
       {(item.location || item.contact) && (
         <dl className="g-facts">
@@ -228,20 +254,53 @@ function GuestItem({ item, code, editable, onChange, showDate, showTrack }) {
           <p className="g-status">
             {item.optional
               ? item.guest_status === "accepted"
-                ? "✓ Lagt til i reisen"
+                ? `✓ Lagt til i reisen${chosen ? `: ${chosen.title}` : ""}`
                 : item.guest_status === "declined"
                   ? "Ikke valgt"
                   : "Valgfritt tillegg"
               : GUEST_STATUS[item.guest_status]}
           </p>
+          {item.optional && hasOptions && (
+            <div className="g-options">
+              {item.options.map((o) => {
+                const selected = chosen?.id === o.id;
+                return (
+                  <div key={o.id} className={`g-option${selected ? " g-option-selected" : ""}`}>
+                    {o.image_url && <img src={o.image_url} alt="" loading="lazy" />}
+                    <div className="g-option-body">
+                      <div className="g-item-head">
+                        <strong>{o.title}</strong>
+                        {o.price !== null && o.price !== "" && (
+                          <span className="g-price">{formatMoney(o.price)}</span>
+                        )}
+                      </div>
+                      {o.description && <p className="g-desc">{o.description}</p>}
+                      {editable && (
+                        <button
+                          className="g-btn g-btn-yes g-btn-small"
+                          aria-pressed={selected}
+                          disabled={saving}
+                          onClick={() => respond("accepted", o.id)}
+                        >
+                          {selected ? "✓ Valgt" : "Velg"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {editable && (
             <>
               <div className="g-buttons">
                 {item.optional ? (
                   <>
-                    <button className="g-btn g-btn-yes" aria-pressed={item.guest_status === "accepted"} disabled={saving} onClick={() => respond("accepted")}>
-                      Legg til
-                    </button>
+                    {!hasOptions && (
+                      <button className="g-btn g-btn-yes" aria-pressed={item.guest_status === "accepted"} disabled={saving} onClick={() => respond("accepted")}>
+                        Legg til
+                      </button>
+                    )}
                     <button className="g-btn" aria-pressed={item.guest_status === "declined"} disabled={saving} onClick={() => respond("declined")}>
                       Nei takk
                     </button>
@@ -267,7 +326,7 @@ function GuestItem({ item, code, editable, onChange, showDate, showTrack }) {
                 onChange={(e) => setComment(e.target.value)}
               />
               {comment !== (item.guest_comment || "") && (
-                <button className="g-btn g-btn-small" disabled={saving} onClick={() => respond(item.guest_status)}>
+                <button className="g-btn g-btn-small" disabled={saving} onClick={() => respond(item.guest_status, item.guest_option)}>
                   Lagre kommentar
                 </button>
               )}
@@ -275,6 +334,23 @@ function GuestItem({ item, code, editable, onChange, showDate, showTrack }) {
             </>
           )}
           {!editable && item.guest_comment && <p className="g-muted">«{item.guest_comment}»</p>}
+        </div>
+      )}
+
+      {addons.length > 0 && (
+        <div className="g-addons">
+          <p className="g-addons-label">Tillegg du kan velge</p>
+          {addons.map((a) => (
+            <GuestItem
+              key={a.id}
+              item={a}
+              code={code}
+              editable={editable}
+              onChange={onChange}
+              addonsFor={addonsFor}
+              nested
+            />
+          ))}
         </div>
       )}
     </article>
@@ -302,11 +378,15 @@ function Summary({ trip, items, code, editable, onSubmitted }) {
     onSubmitted({ guest_message: message, guest_submitted_at: data });
   }
 
-  if (!editable && !trip.guest_submitted_at && base + extra === 0) return null;
+  const payable = items.filter((i) => isIncluded(i) && itemTotal(i) > 0);
+  const paid = payable.filter((i) => i.paid).reduce((s, i) => s + itemTotal(i), 0);
 
   return (
-    <aside className="g-summary">
+    <section className="g-summary">
       <h2>Oppsummering</h2>
+      {asked.length === 0 && base + extra === 0 && !editable && (
+        <p className="g-muted">Ingenting å oppsummere ennå.</p>
+      )}
       {asked.length > 0 && (
         <p>
           {answered.length} av {asked.length} punkter besvart
@@ -325,6 +405,14 @@ function Summary({ trip, items, code, editable, onSubmitted }) {
           )}
           <dt className="g-total">Totalt</dt>
           <dd className="g-total">{formatMoney(base + extra)}</dd>
+          {paid > 0 && (
+            <>
+              <dt>Betalt</dt>
+              <dd>{formatMoney(paid)}</dd>
+              <dt>Gjenstår å betale</dt>
+              <dd>{formatMoney(base + extra - paid)}</dd>
+            </>
+          )}
         </dl>
       )}
       {base + extra > 0 && (
@@ -350,6 +438,6 @@ function Summary({ trip, items, code, editable, onSubmitted }) {
           {editable && " Du kan fortsatt endre og sende på nytt."}
         </p>
       )}
-    </aside>
+    </section>
   );
 }

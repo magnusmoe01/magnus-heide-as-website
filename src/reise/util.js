@@ -46,7 +46,7 @@ export const PRODUCT_COLUMNS = [
 ];
 export const ITEM_COLUMNS = [
   ...PRODUCT_COLUMNS,
-  "product_id", "date", "nights", "time", "end_time", "all_day", "quantity", "ask_guest", "optional", "sort",
+  "product_id", "date", "nights", "time", "end_time", "all_day", "options", "paid", "refundable", "refundable_until", "parent_id", "quantity", "ask_guest", "optional", "sort",
 ];
 
 export function pick(obj, keys) {
@@ -159,10 +159,48 @@ export function formatMoney(n, currency = PRICE_CURRENCY) {
   }).format(Number(n));
 }
 
+/** Valget gjesten har gjort for et tilleggsvalg med flere valgmuligheter. */
+export function selectedOption(item) {
+  if (!item.optional || !item.guest_option) return null;
+  return item.options?.find((o) => o.id === item.guest_option) ?? null;
+}
+
+export function unitPrice(item) {
+  const option = selectedOption(item);
+  const price = option ? option.price : item.price;
+  return price === null || price === undefined || price === "" ? null : Number(price);
+}
+
 export function itemTotal(item) {
-  if (item.price === null || item.price === undefined) return 0;
+  const price = unitPrice(item);
+  if (price === null) return 0;
   const nights = item.price_unit === "per natt" ? item.nights || 1 : 1;
-  return Number(item.price) * (Number(item.quantity) || 1) * nights;
+  return price * (Number(item.quantity) || 1) * nights;
+}
+
+/** «5 000 KES × 4» når prisen ganges opp, ellers null. */
+export function priceBreakdown(item) {
+  const unit = unitPrice(item);
+  if (unit === null) return null;
+  const parts = [formatMoney(unit)];
+  if (item.price_unit === "per natt" && (item.nights || 1) > 1) parts.push(`${item.nights} netter`);
+  const qty = Number(item.quantity) || 1;
+  if (qty > 1) parts.push(qty.toLocaleString("nb-NO"));
+  return parts.length > 1 ? parts.join(" × ") : null;
+}
+
+/** Om betalingsstatus er relevant å vise for elementet. */
+export function showPayment(item) {
+  if (item.optional && item.guest_status !== "accepted") return false;
+  return item.paid || itemTotal(item) > 0;
+}
+
+export function paymentText(item) {
+  if (!item.paid) return "Ikke betalt ennå";
+  if (!item.refundable) return "Betalt · ikke refunderbar";
+  return item.refundable_until
+    ? `Betalt · refunderbar til ${formatShort(item.refundable_until)}`
+    : "Betalt · refunderbar";
 }
 
 /** Om elementet teller med i totalprisen gitt gjestens svar. */
@@ -194,7 +232,7 @@ export function formatTime(item) {
 /** Overnattinger som startet tidligere og fortsatt gjelder natten til `day`. */
 export function continuingStays(items, day) {
   return items.filter(
-    (i) => i.track === "stay" && i.date && i.date < day && addDays(i.date, i.nights || 1) > day
+    (i) => !i.parent_id && i.track === "stay" && i.date && i.date < day && addDays(i.date, i.nights || 1) > day
   );
 }
 
