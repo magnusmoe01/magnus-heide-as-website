@@ -605,4 +605,34 @@ textarea { resize: vertical; }
   transform: rotate(45deg); transition: transform 150ms; margin: 0 2px 4px 0;
 }
 .g-tl-toggle[aria-expanded="false"] .g-tl-chevron { transform: rotate(-45deg); margin-bottom: 0; }
-.g-tl-collapsed { font-size: 14px; }
+.g-tl-collapsed { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+.g-tl-collapsed .r-icon { margin-right: 6px; }
+.g-tl-collapsed-time { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 8px; }
+
+/* ---------- Mobil: kun det praktiske for reiseplanen ---------- */
+
+@media (max-width: 760px) {
+  /* Ingen priser, betaling, svar eller oppsummering – det gjøres på PC. */
+  .g-page .r-item-right, .g-page .g-price, .g-page .r-pay, .g-tl-side, .g-tl-header,
+  .g-respond, .g-to-summary, .g-tabs [data-tab="summary"] { display: none !important; }
+  /* Vis bare tillegg som faktisk er valgt. */
+  .g-nested:not(.g-st-accepted),
+  .g-tl-entry:has(> .g-optional:not(.g-st-accepted)) { display: none; }
+  .g-addons:not(:has(.g-st-accepted)) { display: none; }
+  .g-addons-label { display: none; }
+
+  .g-hero { padding: 24px 0 16px; }
+  .g-hero h1 { font-size: 28px; }
+  .g-intro { font-size: 15px; }
+  .g-tabs button { padding: 12px 10px; }
+  .g-main { margin-top: 16px; }
+  .g-tl-day { font-size: 18px; }
+  .g-item { padding: 14px; gap: 8px; }
+  .g-img { width: calc(100% + 28px); margin: -14px -14px 0; }
+  .g-item h3 { font-size: 16px; margin: 4px 0; }
+  .g-desc { font-size: 14px; }
+  .g-links { gap: 6px; }
+  .g-link { flex: 1 1 calc(50% - 6px); min-height: 44px; }
+  .g-facts { font-size: 14px; }
+  .g-facts a, .g-facts dd a { word-break: break-word; }
+}

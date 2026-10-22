@@ -37,14 +37,10 @@ export default function GuestTrip({ code }) {
   const addonsFor = (item) => items.filter((i) => i.parent_id === item.id).sort(sortItems);
   const itemProps = { code, editable, onChange: updateItem, addonsFor, currency: trip.currency };
   const topLevel = items.filter((i) => !i.parent_id);
-  const optional = items.filter((i) => i.optional);
-  // Tillegg-fanen: frittstående tillegg og elementer som har tillegg under seg.
-  const withExtras = topLevel.filter((i) => i.optional || addonsFor(i).length > 0);
   const tabs = [
     ["timeline", "Tidslinje"],
     ["stay", TRACK_PLURAL.stay],
     ["experience", TRACK_PLURAL.experience],
-    ...(optional.length ? [["extras", `Tillegg (${optional.length})`]] : []),
     ["summary", "Oppsummering"],
   ];
   const toSummary = editable && tab !== "summary" && (
@@ -68,7 +64,7 @@ export default function GuestTrip({ code }) {
 
       <nav className="g-tabs" role="tablist">
         {tabs.map(([k, label]) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>
+          <button key={k} role="tab" data-tab={k} aria-selected={tab === k} onClick={() => setTab(k)}>
             {label}
           </button>
         ))}
@@ -78,12 +74,6 @@ export default function GuestTrip({ code }) {
           {tab === "timeline" && <Timeline trip={trip} items={topLevel} itemProps={itemProps} />}
           {(tab === "stay" || tab === "experience") && (
             <TrackList items={topLevel.filter((i) => i.track === tab)} itemProps={itemProps} />
-          )}
-          {tab === "extras" && (
-            <>
-              <p className="g-muted">Valgfrie tillegg du kan legge til reisen.</p>
-              <TrackList items={withExtras} itemProps={itemProps} showTrack />
-            </>
           )}
           {tab === "summary" && (
             <Summary trip={trip} items={items} code={code} editable={editable} onSubmitted={setTrip} />
@@ -177,16 +167,19 @@ function Timeline({ trip, items, itemProps }) {
                   )}
                 </>
               ) : (
-                <p className="g-muted g-tl-empty g-tl-collapsed">
-                  {[
-                    experiences.length
-                      ? `${experiences.length} ${experiences.length === 1 ? "aktivitet" : "aktiviteter"}`
-                      : "Ingen aktiviteter",
-                    stayNames.length && `Overnatting: ${stayNames.join(", ")}`,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
+                <ul className="g-tl-collapsed">
+                  {experiences.map((i) => (
+                    <li key={i.id}>
+                      {formatTime(i) && <span className="g-tl-collapsed-time">{formatTime(i)}</span>}
+                      <Icon value={i.icon} />
+                      {i.title}
+                    </li>
+                  ))}
+                  {experiences.length === 0 && <li className="g-muted">Ingen aktiviteter registrert</li>}
+                  {stayNames.length > 0 && (
+                    <li className="g-muted">Overnatting: {stayNames.join(", ")}</li>
+                  )}
+                </ul>
               )}
             </section>
             {open && (stays.length > 0 || staying.length > 0) && (
