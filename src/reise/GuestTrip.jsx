@@ -39,6 +39,7 @@ export default function GuestTrip({ code }) {
   const topLevel = items.filter((i) => !i.parent_id);
   const tabs = [
     ["timeline", "Tidslinje"],
+    ["today", "I dag"],
     ["stay", TRACK_PLURAL.stay],
     ["experience", TRACK_PLURAL.experience],
     ["summary", "Oppsummering"],
@@ -72,6 +73,7 @@ export default function GuestTrip({ code }) {
 
       <main className="g-main">
           {tab === "timeline" && <Timeline trip={trip} items={topLevel} itemProps={itemProps} />}
+          {tab === "today" && <Today trip={trip} items={topLevel} itemProps={itemProps} />}
           {(tab === "stay" || tab === "experience") && (
             <TrackList items={topLevel.filter((i) => i.track === tab)} itemProps={itemProps} />
           )}
@@ -84,9 +86,26 @@ export default function GuestTrip({ code }) {
   );
 }
 
-function Timeline({ trip, items, itemProps }) {
+/** Dagens program; utenfor reisen vises neste dag med planer. */
+function Today({ trip, items, itemProps }) {
+  const today = new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD i lokal tid
   const days = tripDays(trip, items);
-  const undated = items.filter((i) => !i.date);
+  if (days.includes(today)) {
+    return <Timeline trip={trip} items={items} itemProps={itemProps} onlyDays={[today]} />;
+  }
+  const next = days.find((d) => d > today);
+  if (!next) return <p className="g-muted">Reisen er over. Ingen flere planer.</p>;
+  return (
+    <>
+      <p className="g-muted">Ingen planer i dag. Neste dag med planer er {formatDay(next).toLowerCase()}:</p>
+      <Timeline trip={trip} items={items} itemProps={itemProps} onlyDays={[next]} />
+    </>
+  );
+}
+
+function Timeline({ trip, items, itemProps, onlyDays }) {
+  const days = onlyDays ?? tripDays(trip, items);
+  const undated = onlyDays ? [] : items.filter((i) => !i.date);
   // «Lukk alle dager» er av som standard; enkeltdager kan åpnes/lukkes uansett.
   const [collapseAll, setCollapseAll] = useState(false);
   const [dayOpen, setDayOpen] = useState({});
@@ -131,19 +150,21 @@ function Timeline({ trip, items, itemProps }) {
   );
   return (
     <>
-      <label className="g-switch">
-        <input
-          type="checkbox"
-          role="switch"
-          checked={collapseAll}
-          onChange={(e) => {
-            setCollapseAll(e.target.checked);
-            setDayOpen({});
-          }}
-        />
-        <span className="g-switch-track" aria-hidden="true" />
-        Lukk alle dager
-      </label>
+      {!onlyDays && (
+        <label className="g-switch">
+          <input
+            type="checkbox"
+            role="switch"
+            checked={collapseAll}
+            onChange={(e) => {
+              setCollapseAll(e.target.checked);
+              setDayOpen({});
+            }}
+          />
+          <span className="g-switch-track" aria-hidden="true" />
+          Lukk alle dager
+        </label>
+      )}
       <div className="g-tl">
       <div className="g-tl-header" aria-hidden="true">
         <span />
