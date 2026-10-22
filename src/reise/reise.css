@@ -174,10 +174,11 @@ textarea { resize: vertical; }
 
 .r-item {
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 8px 10px; display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: 10px; cursor: grab;
+  padding: 8px 10px; display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 12px; cursor: grab;
 }
 .r-item-time { font-size: 12px; line-height: 1.5; padding-top: 1px; color: var(--accent); font-variant-numeric: tabular-nums; }
 .r-item-time span { display: block; }
+.r-item-time .r-next-day { font-size: 11px; color: var(--muted); }
 .r-item-body { display: grid; gap: 6px; min-width: 0; }
 .r-item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .r-item-price { font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }

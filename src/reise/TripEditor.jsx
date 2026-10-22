@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 import { LabelOverview, Modal, StatusBadge, Tag } from "./ui";
 import {
   ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatNight, formatShort, formatTime, iconFor, isIncluded, itemTotal, labelSummary,
+  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, iconFor, isIncluded, itemTotal, labelSummary,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
 
@@ -432,6 +432,7 @@ function ItemCard({
           <>
             {item.time}
             {item.end_time && <span>–{item.end_time}</span>}
+            {endsNextDay(item) && <span className="r-next-day">(neste dag)</span>}
           </>
         )}
       </div>

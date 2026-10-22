@@ -173,9 +173,16 @@ export function sortItems(a, b) {
   );
 }
 
+/** Sluttid før starttid betyr at elementet slutter neste dag. */
+export function endsNextDay(item) {
+  return !!(item.time && item.end_time && item.end_time < item.time);
+}
+
 export function formatTime(item) {
   if (item.all_day) return "Hele dagen";
-  if (item.time && item.end_time) return `${item.time}–${item.end_time}`;
+  if (item.time && item.end_time) {
+    return `${item.time}–${item.end_time}${endsNextDay(item) ? " (neste dag)" : ""}`;
+  }
   return item.time || "";
 }
 
