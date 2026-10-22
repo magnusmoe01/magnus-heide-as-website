@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import ItemEditor from "./ItemEditor";
 import { supabase } from "./supabase";
 import { LabelOverview, Modal, StatusBadge, Tag } from "./ui";
 import {
-  ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRACK_PLURAL, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatShort, formatTime, iconFor, isIncluded, itemTotal, labelSummary,
+  ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
+  continuingStays, formatDay, formatMoney, formatNight, formatShort, formatTime, iconFor, isIncluded, itemTotal, labelSummary,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
 
@@ -350,19 +350,18 @@ export default function TripEditor({ id, onBack }) {
       </datalist>
 
       <div className="r-timeline">
-        <div className="r-tl-head">
-          <span>Dato</span>
-          <span>{TRACK_PLURAL.stay}</span>
-          <span>{TRACK_PLURAL.experience}</span>
-        </div>
         {days.length === 0 && (
           <p className="r-muted r-tl-empty">Sett fra- og til-dato for å få dager i tidslinjen.</p>
         )}
-        {days.map((d) => {
+        {days.map((d, idx) => {
           const outside =
             (trip.start_date && d < trip.start_date) || (trip.end_date && d > trip.end_date);
+          const isLast = idx === days.length - 1;
+          const hasStay = items.some((i) => i.track === "stay" && i.date === d) ||
+            continuingStays(items, d).length > 0;
           return (
-            <div className={`r-tl-row${outside ? " r-tl-outside" : ""}`} key={d}>
+            <Fragment key={d}>
+            <div className={`r-tl-row r-tl-day${outside ? " r-tl-outside" : ""}`}>
               <div className="r-tl-date">
                 {formatDay(d)}
                 {outside && <span className="r-muted"> (utenfor reisen)</span>}
@@ -387,12 +386,18 @@ export default function TripEditor({ id, onBack }) {
                   }}
                 />
               </div>
-              {renderCell(d, "stay")}
               {renderCell(d, "experience")}
             </div>
+            {(!isLast || hasStay) && (
+              <div className="r-tl-row r-tl-night">
+                <div className="r-tl-date">🌙 {formatNight(d)}</div>
+                {renderCell(d, "stay")}
+              </div>
+            )}
+            </Fragment>
           );
         })}
-        <div className="r-tl-row r-tl-undated">
+        <div className="r-tl-row r-tl-undated r-tl-3">
           <div className="r-tl-date">
             Uten dato
             <span className="r-muted">Parkert eller tillegg uten fast dag</span>

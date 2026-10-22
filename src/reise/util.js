@@ -109,6 +109,16 @@ export function formatDay(iso) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+const nightFmt = new Intl.DateTimeFormat("nb-NO", {
+  weekday: "short", day: "numeric", month: "short", timeZone: "UTC",
+});
+
+/** «Natt man. 2. nov. – tir. 3. nov.» for natten som starter `iso`. */
+export function formatNight(iso) {
+  const f = (d) => nightFmt.format(new Date(d + "T00:00:00Z"));
+  return `Natt ${f(iso)} – ${f(addDays(iso, 1))}`;
+}
+
 export function formatShort(iso) {
   return iso ? shortFmt.format(new Date(iso + "T00:00:00Z")) : "";
 }

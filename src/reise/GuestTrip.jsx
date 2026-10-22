@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import { LabelOverview, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
-  GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney,
+  GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
   formatRange, formatShort, formatTime, labelSummary, ICONS, iconFor, isIncluded, itemTotal, linkLabel, mapsUrl, sortItems, telHref, tripDays,
 } from "./util";
 import "./reise.css";
@@ -88,24 +88,31 @@ function Timeline({ trip, items, itemProps }) {
     <>
       {days.map((d) => {
         const dayItems = items.filter((i) => i.date === d).sort(sortItems);
-        const staying = continuingStays(items, d);
-        const stays = dayItems.filter((i) => i.track === "stay");
         const experiences = dayItems.filter((i) => i.track === "experience");
+        const stays = dayItems.filter((i) => i.track === "stay");
+        const staying = continuingStays(items, d);
         return (
-          <section className="g-day" key={d}>
-            <h2>
-              {formatDay(d)}
-              {(trip.day_labels?.[d] || []).map((l) => <Tag key={l} label={l} />)}
-            </h2>
-            {experiences.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
-            {stays.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
-            {staying.map((s) => (
-              <p className="g-staying" key={s.id}>
-                🛏 Overnatting: {s.title}
-              </p>
-            ))}
-            {dayItems.length === 0 && staying.length === 0 && <p className="g-muted">Ingen aktiviteter registrert</p>}
-          </section>
+          <Fragment key={d}>
+            <section className="g-day">
+              <h2>
+                {formatDay(d)}
+                {(trip.day_labels?.[d] || []).map((l) => <Tag key={l} label={l} />)}
+              </h2>
+              {experiences.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
+              {experiences.length === 0 && <p className="g-muted">Ingen aktiviteter registrert</p>}
+            </section>
+            {(stays.length > 0 || staying.length > 0) && (
+              <section className="g-night">
+                <h3 className="g-night-label">🌙 {formatNight(d)}</h3>
+                {stays.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
+                {staying.map((s) => (
+                  <p className="g-staying" key={s.id}>
+                    {s.title} <span className="g-muted">· natt {nightNumber(s, d)} av {s.nights || 1}</span>
+                  </p>
+                ))}
+              </section>
+            )}
+          </Fragment>
         );
       })}
       {undated.length > 0 && (
@@ -116,6 +123,10 @@ function Timeline({ trip, items, itemProps }) {
       )}
     </>
   );
+}
+
+function nightNumber(stay, day) {
+  return Math.round((Date.parse(day) - Date.parse(stay.date)) / 864e5) + 1;
 }
 
 function TrackList({ items, itemProps, showTrack }) {
