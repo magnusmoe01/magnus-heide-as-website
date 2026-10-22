@@ -128,28 +128,6 @@ function Timeline({ trip, items, itemProps, onlyDays }) {
         {showPayment(i) && (
           <span className={`r-pay${i.paid ? " r-pay-paid" : ""}`}>{paymentText(i)}</span>
         )}
-        <OptionPrices item={i} currency={itemProps.currency} />
-        {itemProps.addonsFor(i).length > 0 && (
-          <div className="g-tl-side-addons">
-            <span className="g-tl-side-label">Tillegg</span>
-            {itemProps.addonsFor(i).map((a) => (
-              <div key={a.id} className={`g-tl-side-addon${a.guest_status === "accepted" ? " is-selected" : ""}`}>
-                <span className="g-tl-side-title">
-                  {a.guest_status === "accepted" && "✓ "}
-                  {a.title}
-                </span>
-                {a.options?.length > 0 ? (
-                  <OptionPrices item={a} currency={itemProps.currency} />
-                ) : (
-                  <AddonPrice item={a} currency={itemProps.currency} />
-                )}
-                {showPayment(a) && (
-                  <span className={`r-pay${a.paid ? " r-pay-paid" : ""}`}>{paymentText(a)}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </aside>
     </div>
   );
@@ -264,54 +242,6 @@ function Timeline({ trip, items, itemProps, onlyDays }) {
         </Modal>
       )}
     </>
-  );
-}
-
-/** Pris for et tillegg; uten valgt alternativ vises laveste pris blant valgene. */
-/** Sjåfør/transport mellom arrangementene: bil på en stiplet linje med en boks ved siden av. */
-function Transfer({ item, onOpen }) {
-  const route = routeText(item);
-  return (
-    <div className="g-transfer">
-      <div className="g-transfer-rail" aria-hidden="true">
-        <span className="g-transfer-icon">
-          <Icon value={item.icon || "driver"} />
-        </span>
-      </div>
-      <button className="g-transfer-box" onClick={onOpen}>
-        <span className="g-transfer-kicker">
-          Vi kjører{formatTime(item) && ` · ${formatTime(item)}`}
-        </span>
-        <strong>{route || item.title}</strong>
-        <span className="g-muted">{[route && item.title, item.contact].filter(Boolean).join(" · ")}</span>
-        {item.description && <span className="g-transfer-desc">{item.description}</span>}
-      </button>
-    </div>
-  );
-}
-
-/** Pris per valgmulighet i pris-kolonnen, med gjestens valg markert. */
-function OptionPrices({ item, currency }) {
-  if (!item.optional || !item.options?.length) return null;
-  const chosen = selectedOption(item);
-  return (
-    <ul className="g-tl-side-options">
-      {item.options.map((o) => (
-        <li key={o.id} className={chosen?.id === o.id ? "is-selected" : ""}>
-          <span className="g-tl-side-title">
-            {chosen?.id === o.id && "✓ "}
-            {o.title}
-          </span>
-          {o.price !== null && o.price !== "" && (
-            <span className="r-pricetag g-price">
-              <span>
-                <Money amount={Number(o.price)} currency={currency} />
-              </span>
-            </span>
-          )}
-        </li>
-      ))}
-    </ul>
   );
 }
 

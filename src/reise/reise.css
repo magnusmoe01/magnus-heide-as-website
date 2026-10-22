@@ -564,8 +564,7 @@ textarea { resize: vertical; }
   }
   .g-tl-side:empty { display: none; }
   /* Prisen flyttes ut av hovedkortet (tillegg inni kortet beholder sin). */
-  .g-tl-entry > .g-item > .g-item-head .r-item-right,
-  .g-tl-entry .g-nested > .g-item-head .r-item-right { display: none; }
+  .g-tl-entry > .g-item > .g-item-head .r-item-right { display: none; }
   .g-tl-side-addons { display: grid; gap: 10px; justify-items: end; width: 100%; border-top: 1px dashed var(--border); padding-top: 10px; }
   .g-tl-side-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
   .g-tl-side-addon { display: grid; justify-items: end; gap: 3px; }
@@ -768,6 +767,16 @@ img.r-icon-img { padding: 0; object-fit: cover; width: 1.8em; height: 1.8em; }
 .g-tl-side-options li { display: grid; justify-items: end; gap: 1px; }
 .g-tl-side-options li.is-selected .g-tl-side-title { color: var(--ok); font-weight: 500; }
 @media (min-width: 761px) {
-  .g-tl-entry .g-option .g-price { display: none; }
+  /*
+   * Priser for tillegg og valgmuligheter flyttes ut i pris-kolonnen, på samme høyde som kortet.
+   * Avstand fra kortets kant til kolonnens høyrekant: kortpadding 16 + kant 1 + gap 20 + kolonne 190.
+   */
+  .g-tl-entry .g-item { overflow: visible; }
+  .g-tl-entry > .g-item > .g-img { border-radius: var(--radius) var(--radius) 0 0; }
+  .g-tl-entry .g-nested > .g-img { border-radius: 0 8px 0 0; }
+  .g-tl-entry .g-nested, .g-tl-entry .g-option { position: relative; }
+  .g-tl-entry .g-nested > .g-item-head .r-item-right { position: absolute; top: 12px; right: -228px; }
+  .g-tl-entry > .g-item > .g-respond .g-option .g-price { position: absolute; top: 10px; right: -228px; }
+  .g-tl-entry .g-nested .g-option .g-price { position: absolute; top: 10px; right: -243px; }
 }
 .g-transfer-desc { font-size: 14px; white-space: pre-wrap; margin-top: 4px; }
