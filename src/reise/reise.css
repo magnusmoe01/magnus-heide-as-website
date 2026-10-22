@@ -535,3 +535,14 @@ textarea { resize: vertical; }
 /* Mer luft rundt titlene på arrangementer og overnattinger. */
 .g-item h3 { margin: 6px 0 6px; }
 .g-item-time small { font-size: 12px; font-weight: 400; color: var(--muted); }
+
+/* Valgmuligheter i planen (admin) – samme kort som gjesten ser, litt mindre. */
+.r-options { gap: 6px; }
+.r-options .g-option { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; cursor: pointer; }
+.r-options .g-option:not(:has(img)) { grid-template-columns: 1fr; }
+.r-options .g-option img { min-height: 56px; }
+.r-options .g-option-body { padding: 6px 10px 8px 0; gap: 2px; }
+.r-options .g-option:not(:has(img)) .g-option-body { padding-left: 10px; }
+.r-options .g-item-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.r-options .g-price { font-size: 12px; }
+.r-options .g-desc { font-size: 12px; color: var(--muted); }

@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import ItemEditor from "./ItemEditor";
 import { findOrCreateProduct } from "./library";
 import { supabase } from "./supabase";
-import { ConvertedTotal, Icon, LabelTimeline, Modal, PriceTag, StatusBadge, Tag } from "./ui";
+import { ConvertedTotal, Icon, LabelTimeline, Modal, Money, PriceTag, StatusBadge, Tag } from "./ui";
 import {
   CONVERT_CURRENCIES, ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
   continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelRuns, paymentText, selectedOption, showPayment,
@@ -522,7 +522,6 @@ function ItemCard({
             !isAddon && item.track === "stay" && `${item.nights || 1} ${item.nights > 1 ? "netter" : "natt"}`,
             item.links?.length > 0 && `${item.links.length} lenke${item.links.length > 1 ? "r" : ""}`,
             item.image_url && "bilde",
-            item.optional && item.options?.length > 0 && !option && `${item.options.length} valgmuligheter`,
           ]
             .filter(Boolean)
             .join(" · ")}
@@ -542,7 +541,32 @@ function ItemCard({
           )}
         </div>
       ) : null}
-      {option && <p className="r-comment">Valgt: {option.title}</p>}
+      {item.optional && item.options?.length > 0 ? (
+        // Valgmulighetene vises som gjesten ser dem, med gjestens valg markert.
+        <div className="g-options r-options">
+          {item.options.map((o) => (
+            <div key={o.id} className={`g-option${option?.id === o.id ? " g-option-selected" : ""}`}>
+              {o.image_url && <img src={o.image_url} alt="" loading="lazy" />}
+              <div className="g-option-body">
+                <div className="g-item-head">
+                  <strong>
+                    {option?.id === o.id && "✓ "}
+                    {o.title}
+                  </strong>
+                  {o.price !== null && o.price !== "" && (
+                    <span className="g-price">
+                      <Money amount={Number(o.price)} currency={currency} />
+                    </span>
+                  )}
+                </div>
+                {o.description && <p className="g-desc">{o.description}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        option && <p className="r-comment">Valgt: {option.title}</p>
+      )}
       {item.guest_comment && <p className="r-comment">«{item.guest_comment}»</p>}
       </div>
     </div>

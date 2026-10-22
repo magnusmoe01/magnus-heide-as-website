@@ -264,15 +264,15 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
 
       {respondable && (
         <div className="g-respond">
-          <p className="g-status">
-            {item.optional
-              ? item.guest_status === "accepted"
-                ? `✓ Lagt til i reisen${chosen ? `: ${chosen.title}` : ""}`
-                : item.guest_status === "declined"
-                  ? "Ikke valgt"
-                  : "Valgfritt tillegg"
-              : GUEST_STATUS[item.guest_status]}
-          </p>
+          {(!item.optional || item.guest_status !== "pending") && (
+            <p className="g-status">
+              {item.optional
+                ? item.guest_status === "accepted"
+                  ? `✓ Lagt til i reisen${chosen ? `: ${chosen.title}` : ""}`
+                  : "Ikke valgt"
+                : GUEST_STATUS[item.guest_status]}
+            </p>
+          )}
           {item.optional && hasOptions && (
             <div className="g-options">
               {item.options.map((o) => {
