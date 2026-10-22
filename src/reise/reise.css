@@ -533,7 +533,8 @@ textarea { resize: vertical; }
 }
 .g-item-kicker:empty { display: none; }
 /* Mer luft rundt titlene på arrangementer og overnattinger. */
-.g-item h3 { margin: 6px 0 6px; }
+.g-item h3 { margin: 6px 0 0; }
+.g-item-head + .g-desc { margin-top: -4px; }
 .g-item-time small { font-size: 12px; font-weight: 400; color: var(--muted); }
 
 /* Valgmuligheter i planen (admin) – samme kort som gjesten ser, litt mindre. */
