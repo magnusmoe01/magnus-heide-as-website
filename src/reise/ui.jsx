@@ -35,7 +35,7 @@ export function Icon({ value }) {
 }
 
 /** Pris for et element: enhetspris × antall og sum, eller bare summen. */
-export function PriceTag({ item, className }) {
+export function PriceTag({ item, currency, className }) {
   const total = itemTotal(item);
   if (total <= 0) return null;
   const breakdown = priceBreakdown(item);
@@ -43,11 +43,15 @@ export function PriceTag({ item, className }) {
     <span className={`r-pricetag ${className || ""}`}>
       {breakdown ? (
         <>
-          {breakdown}
-          <small>= {formatMoney(total)}</small>
+          <span>{breakdown}</span>
+          <small>
+            = <Money amount={total} currency={currency} />
+          </small>
         </>
       ) : (
-        formatMoney(total)
+        <span>
+          <Money amount={total} currency={currency} />
+        </span>
       )}
     </span>
   );
@@ -148,38 +152,65 @@ export function LabelOverview({ summary }) {
 
 const RATE_CACHE_KEY = `reise-rates-${PRICE_CURRENCY}`;
 
+function readCachedRates() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(RATE_CACHE_KEY));
+    return cached && Date.now() - cached.at < 864e5 ? cached.rates : null;
+  } catch {
+    return null;
+  }
+}
+
+// Felles henting så mange priser på siden ikke gir mange kall.
+let ratesRequest = null;
+function loadRates() {
+  ratesRequest ??= fetch(`https://open.er-api.com/v6/latest/${PRICE_CURRENCY}`)
+    .then((r) => r.json())
+    .then((d) => {
+      if (d.result !== "success") throw new Error(d.result);
+      try {
+        localStorage.setItem(RATE_CACHE_KEY, JSON.stringify({ at: Date.now(), rates: d.rates }));
+      } catch {
+        // Ikke kritisk – kursen hentes på nytt neste gang.
+      }
+      return d.rates;
+    })
+    .catch(() => {
+      ratesRequest = null;
+      return null;
+    });
+  return ratesRequest;
+}
+
 /** Veiledende kurs fra PRICE_CURRENCY til `target`, hentet maks én gang i døgnet. */
 function useRate(target) {
-  const [rates, setRates] = useState(() => {
-    try {
-      const cached = JSON.parse(localStorage.getItem(RATE_CACHE_KEY));
-      return cached && Date.now() - cached.at < 864e5 ? cached.rates : null;
-    } catch {
-      return null;
-    }
-  });
+  const [rates, setRates] = useState(readCachedRates);
 
   useEffect(() => {
     if (rates || !target || target === PRICE_CURRENCY) return;
     let cancelled = false;
-    fetch(`https://open.er-api.com/v6/latest/${PRICE_CURRENCY}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled || d.result !== "success") return;
-        setRates(d.rates);
-        try {
-          localStorage.setItem(RATE_CACHE_KEY, JSON.stringify({ at: Date.now(), rates: d.rates }));
-        } catch {
-          // Ikke kritisk – kursen hentes på nytt neste gang.
-        }
-      })
-      .catch(() => {});
+    loadRates().then((r) => !cancelled && r && setRates(r));
     return () => {
       cancelled = true;
     };
   }, [target, rates]);
 
   return rates?.[target] ?? null;
+}
+
+/** Beløp i KES med veiledende omregning i lysere farge til høyre. */
+export function Money({ amount, currency }) {
+  const rate = useRate(currency);
+  return (
+    <>
+      {formatMoney(amount)}
+      {rate && currency !== PRICE_CURRENCY && (
+        <span className="r-approx" title="Veiledende omregning etter dagens kurs">
+          ≈ {formatMoney(Math.round(amount * rate), currency)}
+        </span>
+      )}
+    </>
+  );
 }
 
 export function ConvertedTotal({ amount, currency }) {

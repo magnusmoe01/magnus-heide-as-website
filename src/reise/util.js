@@ -205,7 +205,8 @@ export function paymentText(item) {
 
 /** Om elementet teller med i totalprisen gitt gjestens svar. */
 export function isIncluded(item) {
-  return item.optional ? item.guest_status === "accepted" : item.guest_status !== "declined";
+  if (item.optional) return item.guest_status === "accepted";
+  return !item.ask_guest || item.guest_status !== "declined";
 }
 
 export function sortItems(a, b) {
@@ -219,6 +220,12 @@ export function sortItems(a, b) {
 /** Sluttid før starttid betyr at elementet slutter neste dag. */
 export function endsNextDay(item) {
   return !!(item.time && item.end_time && item.end_time < item.time);
+}
+
+/** "time" (klokkeslett), "allday" eller "none" (ingen tid vises). */
+export function timeMode(item) {
+  if (item.all_day) return "allday";
+  return item.time || item.end_time ? "time" : "none";
 }
 
 export function formatTime(item) {

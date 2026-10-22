@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { ConvertedTotal, Icon, LabelTimeline, PriceTag, NotConfigured, Tag, usePageMeta } from "./ui";
+import { ConvertedTotal, Icon, LabelTimeline, Money, PriceTag, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
   formatRange, formatShort, formatTime, labelRuns, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
@@ -35,7 +35,7 @@ export default function GuestTrip({ code }) {
   const setTrip = (patch) => setData((d) => ({ ...d, trip: { ...d.trip, ...patch } }));
 
   const addonsFor = (item) => items.filter((i) => i.parent_id === item.id).sort(sortItems);
-  const itemProps = { code, editable, onChange: updateItem, addonsFor };
+  const itemProps = { code, editable, onChange: updateItem, addonsFor, currency: trip.currency };
   const topLevel = items.filter((i) => !i.parent_id);
   const optional = items.filter((i) => i.optional);
   // Tillegg-fanen: frittstående tillegg og elementer som har tillegg under seg.
@@ -153,7 +153,7 @@ function TrackList({ items, itemProps, showTrack }) {
   ));
 }
 
-function GuestItem({ item, code, editable, onChange, addonsFor, showDate, showTrack, nested }) {
+function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDate, showTrack, nested }) {
   const addons = nested ? [] : addonsFor(item);
   const [comment, setComment] = useState(item.guest_comment || "");
   const [saving, setSaving] = useState(false);
@@ -192,7 +192,7 @@ function GuestItem({ item, code, editable, onChange, addonsFor, showDate, showTr
 
   return (
     <article
-      className={`g-item g-${item.track} g-st-${item.guest_status}${item.optional ? " g-optional" : ""}${
+      className={`g-item g-${item.track} g-st-${respondable ? item.guest_status : "none"}${item.optional ? " g-optional" : ""}${
         nested ? " g-nested" : ""
       }${
         isIncluded(item) ? "" : " g-off"
@@ -211,7 +211,7 @@ function GuestItem({ item, code, editable, onChange, addonsFor, showDate, showTr
             {item.title}
           </h3>
         </div>
-        <PriceTag item={item} className="g-price" />
+        <PriceTag item={item} currency={currency} className="g-price" />
       </div>
 
       {item.description && <p className="g-desc">{item.description}</p>}
@@ -271,7 +271,9 @@ function GuestItem({ item, code, editable, onChange, addonsFor, showDate, showTr
                       <div className="g-item-head">
                         <strong>{o.title}</strong>
                         {o.price !== null && o.price !== "" && (
-                          <span className="g-price">{formatMoney(o.price)}</span>
+                          <span className="g-price">
+                            <Money amount={Number(o.price)} currency={currency} />
+                          </span>
                         )}
                       </div>
                       {o.description && <p className="g-desc">{o.description}</p>}
@@ -348,6 +350,7 @@ function GuestItem({ item, code, editable, onChange, addonsFor, showDate, showTr
               editable={editable}
               onChange={onChange}
               addonsFor={addonsFor}
+              currency={currency}
               nested
             />
           ))}

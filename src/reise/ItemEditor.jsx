@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { uploadImage } from "./library";
 import { Icon, Modal } from "./ui";
-import { ICONS, PRICE_UNITS, TRACKS, normalizeUrl } from "./util";
+import { ICONS, PRICE_UNITS, TRACKS, normalizeUrl, timeMode } from "./util";
 
 const toNum = (v) => (v === "" || v === null || v === undefined ? null : Number(v));
 const newOptionId = () => crypto.randomUUID().slice(0, 8);
@@ -41,6 +41,8 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
   const [saving, setSaving] = useState(false);
   const [uploads, setUploads] = useState(0);
   const [showEmoji, setShowEmoji] = useState(false);
+  // Nye elementer starter med klokkeslett; eksisterende viser det de er lagret med.
+  const [timeChoice, setTimeChoice] = useState(() => (value.id ? timeMode(value) : "time"));
   const onBusy = (d) => setUploads((n) => n + d);
 
   const set = (k) => (e) =>
@@ -66,7 +68,8 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
       out.date = f.date || null;
       out.quantity = toNum(f.quantity) ?? 1;
       out.nights = f.track === "stay" ? toNum(f.nights) || 1 : null;
-      if (f.all_day) {
+      out.all_day = timeChoice === "allday";
+      if (timeChoice !== "time") {
         out.time = "";
         out.end_time = "";
       }
@@ -122,7 +125,25 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
                 <input type="number" min="1" value={f.nights} onChange={set("nights")} />
               </label>
             ) : null}
-            {!f.all_day && (
+          </div>
+        )}
+
+        {isItem && (
+          <div className="r-row">
+            <div className="r-segmented" role="radiogroup" aria-label="Tidspunkt">
+              {[["time", "Klokkeslett"], ["allday", "Hele dagen"], ["none", "Ingen tid"]].map(([k, label]) => (
+                <button
+                  type="button"
+                  key={k}
+                  role="radio"
+                  aria-checked={timeChoice === k}
+                  onClick={() => setTimeChoice(k)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {timeChoice === "time" && (
               <>
                 <label>
                   Fra
@@ -134,10 +155,6 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
                 </label>
               </>
             )}
-            <label className="r-inline r-allday">
-              <input type="checkbox" checked={f.all_day} onChange={set("all_day")} />
-              Hele dagen
-            </label>
           </div>
         )}
 

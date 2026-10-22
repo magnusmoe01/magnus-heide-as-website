@@ -457,3 +457,16 @@ textarea { resize: vertical; }
 .g-nested.g-st-declined { border-left-color: var(--border); }
 .g-nested h3 { font-size: 15px; }
 .g-nested .g-img { width: calc(100% + 28px); margin: -12px -14px 0; aspect-ratio: 21 / 9; }
+
+/* ---------- Veiledende pris, tidsvalg ---------- */
+
+.r-approx { margin-left: 6px; font-size: 0.85em; font-weight: 400; color: var(--muted); opacity: 0.75; }
+.r-pricetag > span { white-space: nowrap; }
+.r-addon-time { color: var(--accent); margin-right: 6px; font-variant-numeric: tabular-nums; font-weight: 400; }
+.r-segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; align-self: end; }
+.r-segmented button {
+  font: inherit; font-size: 13px; padding: 7px 12px; background: var(--surface); color: var(--muted);
+  border: 0; border-left: 1px solid var(--border); cursor: pointer;
+}
+.r-segmented button:first-child { border-left: 0; }
+.r-segmented button[aria-checked="true"] { background: var(--surface-2); color: var(--text); font-weight: 500; }
