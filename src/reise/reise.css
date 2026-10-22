@@ -352,9 +352,9 @@ textarea { resize: vertical; }
 
 /* ---------- Overnatting mellom dager ---------- */
 
-:root { --night: #eef0f7; --night-text: #4a5078; }
+:root { --night: #eef0f7; --night-soft: #f8f8fa; --night-text: #4a5078; }
 @media (prefers-color-scheme: dark) {
-  :root { --night: #1c1e2a; --night-text: #a9afd6; }
+  :root { --night: #1c1e2a; --night-soft: #1f1e22; --night-text: #a9afd6; }
 }
 /* Natten legger seg over grensen mellom to dager. */
 .r-tl-day > .r-tl-date, .r-tl-day > .r-cell { padding-top: 22px; padding-bottom: 22px; }
@@ -510,9 +510,9 @@ textarea { resize: vertical; }
 .g-tl-entry::before {
   content: ""; position: absolute; left: -22px; top: 24px; width: 22px; height: 2px; background: var(--border);
 }
-.g-tl-night ~ .g-tl-entry .g-item { background: var(--night); }
+.g-tl-night ~ .g-tl-entry .g-item { background: var(--night-soft); }
 .g-tl-night ~ .g-tl-entry .g-staying {
-  margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--night); color: var(--text);
+  margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--night-soft); color: var(--text);
 }
 .g-tl-night ~ .g-tl-entry .g-staying::before { content: none; }
 .g-tl-empty { margin: 0; }
