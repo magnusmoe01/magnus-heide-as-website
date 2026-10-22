@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { LabelOverview, NotConfigured, Tag, usePageMeta } from "./ui";
+import { LabelTimeline, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
-  formatRange, formatShort, formatTime, labelSummary, ICONS, iconFor, isIncluded, itemTotal, linkLabel, mapsUrl, sortItems, telHref, tripDays,
+  formatRange, formatShort, formatTime, labelRuns, ICONS, iconFor, isIncluded, itemTotal, linkLabel, mapsUrl, sortItems, telHref, tripDays,
 } from "./util";
 import "./reise.css";
 
@@ -50,7 +50,7 @@ export default function GuestTrip({ code }) {
         <h1>{trip.title}</h1>
         {trip.start_date && <p className="g-dates">{formatRange(trip.start_date, trip.end_date)}</p>}
         {trip.intro && <p className="g-intro">{trip.intro}</p>}
-        <LabelOverview summary={labelSummary(trip, items)} />
+        <LabelTimeline runs={labelRuns(trip, items)} />
         {trip.status === "confirmed" && <p className="g-confirmed">✓ Reisen er bekreftet</p>}
       </header>
 

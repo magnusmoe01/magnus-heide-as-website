@@ -97,6 +97,24 @@ export function labelSummary(trip, items) {
   return { rows, unlabeled, total: days.length };
 }
 
+/** Sammenhengende perioder med samme by/kategori, i datorekkefølge. */
+export function labelRuns(trip, items) {
+  const labels = trip.day_labels || {};
+  const runs = [];
+  for (const d of tripDays(trip, items)) {
+    const list = labels[d] || [];
+    const key = list.join("|");
+    const last = runs[runs.length - 1];
+    if (last && last.key === key && addDays(last.end, 1) === d) {
+      last.end = d;
+      last.len++;
+    } else {
+      runs.push({ key, labels: list, start: d, end: d, len: 1 });
+    }
+  }
+  return runs;
+}
+
 const dayFmt = new Intl.DateTimeFormat("nb-NO", {
   weekday: "long", day: "numeric", month: "long", timeZone: "UTC",
 });

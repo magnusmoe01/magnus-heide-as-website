@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { GUEST_STATUS, tagHue } from "./util";
+import { GUEST_STATUS, formatRange, tagHue } from "./util";
 
 export function Modal({ title, onClose, children, wide }) {
   useEffect(() => {
@@ -60,6 +60,34 @@ export function Tag({ label, onRemove }) {
         </button>
       )}
     </span>
+  );
+}
+
+/** Byer/kategorier som en tidslinje over reisens datoer. */
+export function LabelTimeline({ runs }) {
+  if (!runs.some((r) => r.labels.length)) return null;
+  const total = runs.reduce((s, r) => s + r.len, 0);
+  return (
+    <div className="r-ltl" style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}>
+      {runs.map((r) => (
+        <div
+          key={r.start}
+          className="r-ltl-run"
+          style={{ gridColumn: `span ${r.len}` }}
+          title={`${r.labels.join(" / ") || "Uten kategori"}: ${formatRange(r.start, r.end)}`}
+        >
+          <div className="r-ltl-bar">
+            {r.labels.length ? (
+              r.labels.map((l) => <span key={l} style={{ "--h": tagHue(l) }} />)
+            ) : (
+              <span className="r-ltl-none" />
+            )}
+          </div>
+          <span className="r-ltl-label">{r.labels.join(" / ")}</span>
+          <span className="r-ltl-dates">{formatRange(r.start, r.end)}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 

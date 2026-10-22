@@ -372,3 +372,17 @@ textarea { resize: vertical; }
 @media (max-width: 900px) {
   .r-tl-night .r-tl-date { background: var(--night); padding-left: 12px; }
 }
+
+/* ---------- Kategori-tidslinje (gjest) ---------- */
+
+.r-ltl { display: grid; column-gap: 3px; margin-top: 24px; max-width: 680px; }
+.r-ltl-run { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.r-ltl-bar { display: flex; flex-direction: column; height: 10px; border-radius: 3px; overflow: hidden; }
+.r-ltl-bar span { flex: 1; background: hsl(var(--h) 50% 60%); }
+.r-ltl-bar .r-ltl-none { background: var(--border); }
+.r-ltl-label, .r-ltl-dates { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-ltl-label { font-weight: 500; }
+.r-ltl-dates { color: var(--muted); }
+@media (prefers-color-scheme: dark) {
+  .r-ltl-bar span { background: hsl(var(--h) 45% 55%); }
+}
