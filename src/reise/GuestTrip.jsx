@@ -59,7 +59,6 @@ export default function GuestTrip({ code }) {
   return (
     <div className="g-page">
       <header className="g-hero">
-        {trip.client_name && <p className="g-kicker">Reiseplan for {trip.client_name}</p>}
         <h1>{trip.title}</h1>
         {trip.start_date && <p className="g-dates">{formatRange(trip.start_date, trip.end_date)}</p>}
         {trip.intro && <p className="g-intro">{trip.intro}</p>}
