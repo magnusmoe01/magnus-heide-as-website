@@ -125,6 +125,29 @@ export default function TripEditor({ id, onBack }) {
       product_id: p.id,
       date: target.date,
       nights: p.track === "stay" ? 1 : null,
+      ...target.prefill,
+    });
+  }
+
+  /**
+   * Transport mellom to arrangementer: forhåndsutfyller tid og sted fra arrangementene,
+   * og nummererer rekkefølgen så den havner riktig også uten klokkeslett.
+   */
+  function insertTransportBetween(list, index) {
+    const a = list[index];
+    const b = list[index + 1];
+    list.forEach((it, i) => {
+      if (it.sort !== i * 10) patchItem(it.id, { sort: i * 10 });
+    });
+    setPicking({
+      date: a.date,
+      track: "transport",
+      prefill: {
+        sort: index * 10 + 5,
+        time: a.end_time || a.time || "",
+        from_place: a.location || "",
+        to_place: b?.location || "",
+      },
     });
   }
 
@@ -260,7 +283,7 @@ export default function TripEditor({ id, onBack }) {
             </span>
           </button>
         ))}
-        {list.map((item) => (
+        {list.map((item, index) => (
           <Fragment key={item.id}>
             <ItemCard
               item={item}
@@ -287,6 +310,15 @@ export default function TripEditor({ id, onBack }) {
                   onResetResponse={() => patchItem(addon.id, RESET_RESPONSE)}
                 />
               ))}
+            {track === "experience" && index < list.length - 1 && (
+              <button
+                className="r-insert"
+                title="Legg til sjåfør / transport mellom disse"
+                onClick={() => insertTransportBetween(list, index)}
+              >
+                <span>+ Transport her</span>
+              </button>
+            )}
           </Fragment>
         ))}
         <button className="r-add" onClick={() => setPicking({ date, track })}>
@@ -508,7 +540,7 @@ export default function TripEditor({ id, onBack }) {
           target={picking}
           onPick={(p) => addFromProduct(p, picking)}
           onBlank={() => {
-            setEditing({ track: picking.track, date: picking.date });
+            setEditing({ track: picking.track, date: picking.date, ...picking.prefill });
             setPicking(null);
           }}
           onClose={() => setPicking(null)}

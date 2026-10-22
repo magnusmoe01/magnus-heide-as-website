@@ -743,3 +743,15 @@ img.r-icon-img { padding: 0; object-fit: cover; width: 1.8em; height: 1.8em; }
 .r-icon-btn .r-icon, .g-transfer-icon .r-icon, .r-btn .r-icon {
   width: auto; height: auto; border: 0; background: none; margin: 0; display: inline;
 }
+
+/* «+ Transport her» mellom arrangementer (admin). */
+.r-insert {
+  position: relative; display: grid; place-items: center; height: 14px; margin: -2px 0;
+  font: inherit; font-size: 11px; color: var(--muted); background: none; border: 0; padding: 0;
+  cursor: pointer; opacity: 0; transition: opacity 120ms;
+}
+.r-insert::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed var(--border); }
+.r-insert span { position: relative; background: var(--surface); padding: 0 8px; border-radius: 999px; }
+.r-cell:hover .r-insert, .r-insert:focus-visible { opacity: 1; }
+.r-insert:hover { color: var(--text); }
+@media (hover: none) { .r-insert { opacity: 1; } }
