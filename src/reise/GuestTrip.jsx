@@ -98,8 +98,14 @@ export default function GuestTrip({ code }) {
 function Timeline({ trip, items, itemProps }) {
   const days = tripDays(trip, items);
   const undated = items.filter((i) => !i.date);
+  // Kort som henger på den vertikale tidslinjen.
+  const entry = (i, extra) => (
+    <div className="g-tl-entry" key={i.id}>
+      <GuestItem item={i} {...itemProps} {...extra} />
+    </div>
+  );
   return (
-    <>
+    <div className="g-tl">
       {days.map((d) => {
         const dayItems = items.filter((i) => i.date === d).sort(sortItems);
         const experiences = dayItems.filter((i) => i.track === "experience");
@@ -107,22 +113,24 @@ function Timeline({ trip, items, itemProps }) {
         const staying = continuingStays(items, d);
         return (
           <Fragment key={d}>
-            <section className="g-day">
-              <h2>
+            <section className="g-tl-group">
+              <h2 className="g-tl-node g-tl-day">
                 {formatDay(d)}
                 {(trip.day_labels?.[d] || []).map((l) => <Tag key={l} label={l} />)}
               </h2>
-              {experiences.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
-              {experiences.length === 0 && <p className="g-muted">Ingen aktiviteter registrert</p>}
+              {experiences.map((i) => entry(i))}
+              {experiences.length === 0 && <p className="g-muted g-tl-empty">Ingen aktiviteter registrert</p>}
             </section>
             {(stays.length > 0 || staying.length > 0) && (
-              <section className="g-night">
-                <h3 className="g-night-label">{formatNight(d)}</h3>
-                {stays.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
+              <section className="g-tl-group">
+                <h3 className="g-tl-node g-tl-night">{formatNight(d)}</h3>
+                {stays.map((i) => entry(i))}
                 {staying.map((s) => (
-                  <p className="g-staying" key={s.id}>
-                    {s.title} <span className="g-muted">· natt {nightNumber(s, d)} av {s.nights || 1}</span>
-                  </p>
+                  <div className="g-tl-entry" key={s.id}>
+                    <p className="g-staying">
+                      {s.title} <span className="g-muted">· natt {nightNumber(s, d)} av {s.nights || 1}</span>
+                    </p>
+                  </div>
                 ))}
               </section>
             )}
@@ -130,12 +138,12 @@ function Timeline({ trip, items, itemProps }) {
         );
       })}
       {undated.length > 0 && (
-        <section className="g-day">
-          <h2>Uten fast dato</h2>
-          {undated.sort(sortItems).map((i) => <GuestItem key={i.id} item={i} {...itemProps} showTrack />)}
+        <section className="g-tl-group">
+          <h2 className="g-tl-node g-tl-day">Uten fast dato</h2>
+          {undated.sort(sortItems).map((i) => entry(i, { showTrack: true }))}
         </section>
       )}
-    </>
+    </div>
   );
 }
 
