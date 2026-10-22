@@ -245,19 +245,23 @@ function Timeline({ trip, items, itemProps, onlyDays }) {
   );
 }
 
-function AddonPrice({ item, currency }) {
-  if (itemTotal(item) > 0) return <PriceTag item={item} currency={currency} className="g-price" />;
-  const prices = (item.options || [])
-    .map((o) => o.price)
-    .filter((p) => p !== null && p !== "")
-    .map(Number);
-  if (!prices.length) return null;
+/** Sjåfør/transport mellom arrangementene: bil på en stiplet linje med en boks ved siden av. */
+function Transfer({ item, onOpen }) {
+  const route = routeText(item);
   return (
-    <span className="r-pricetag g-price">
-      <span>
-        fra <Money amount={Math.min(...prices)} currency={currency} />
-      </span>
-    </span>
+    <div className="g-transfer">
+      <div className="g-transfer-rail" aria-hidden="true">
+        <span className="g-transfer-icon">
+          <Icon value={item.icon || "driver"} />
+        </span>
+      </div>
+      <button className="g-transfer-box" onClick={onOpen}>
+        {formatTime(item) && <span className="g-transfer-kicker">{formatTime(item)}</span>}
+        <strong>{route || item.title}</strong>
+        <span className="g-muted">{[route && item.title, item.contact].filter(Boolean).join(" · ")}</span>
+        {item.description && <span className="g-transfer-desc">{item.description}</span>}
+      </button>
+    </div>
   );
 }
 
