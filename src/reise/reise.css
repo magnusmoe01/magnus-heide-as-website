@@ -524,3 +524,6 @@ textarea { resize: vertical; }
   .g-tl-entry::before { left: -18px; width: 18px; }
 }
 .g-tl-night ~ .g-tl-entry .g-item.g-nested { background: var(--surface); }
+/* Mer luft før hver ny dag i tidslinjen. */
+.g-tl-group:has(> .g-tl-day) { margin-top: 22px; }
+.g-tl-group:first-child { margin-top: 0; }
