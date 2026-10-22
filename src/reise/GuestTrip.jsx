@@ -101,10 +101,21 @@ function Timeline({ trip, items, itemProps }) {
   const entry = (i, extra) => (
     <div className="g-tl-entry" key={i.id}>
       <GuestItem item={i} {...itemProps} {...extra} />
+      {/* Egen kolonne for pris og betaling på brede skjermer. */}
+      <aside className="g-tl-side">
+        <PriceTag item={i} currency={itemProps.currency} className="g-price" />
+        {showPayment(i) && (
+          <span className={`r-pay${i.paid ? " r-pay-paid" : ""}`}>{paymentText(i)}</span>
+        )}
+      </aside>
     </div>
   );
   return (
     <div className="g-tl">
+      <div className="g-tl-header" aria-hidden="true">
+        <span />
+        <span>Pris og betaling</span>
+      </div>
       {days.map((d) => {
         const dayItems = items.filter((i) => i.date === d).sort(sortItems);
         const experiences = dayItems.filter((i) => i.track === "experience");
