@@ -584,7 +584,7 @@ textarea { resize: vertical; }
 
 /* ---------- Lukk/åpne dager (gjest) ---------- */
 
-.g-switch { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; justify-self: start; margin-left: -34px; }
+.g-switch { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; justify-self: start; margin-bottom: 4px; }
 .g-switch input { position: absolute; opacity: 0; pointer-events: none; }
 .g-switch-track {
   width: 36px; height: 20px; border-radius: 999px; background: var(--border); position: relative; transition: background 150ms;
@@ -606,6 +606,3 @@ textarea { resize: vertical; }
 }
 .g-tl-toggle[aria-expanded="false"] .g-tl-chevron { transform: rotate(-45deg); margin-bottom: 0; }
 .g-tl-collapsed { font-size: 14px; }
-@media (max-width: 560px) {
-  .g-switch { margin-left: -26px; }
-}

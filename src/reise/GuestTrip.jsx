@@ -133,7 +133,7 @@ function Timeline({ trip, items, itemProps }) {
     </div>
   );
   return (
-    <div className="g-tl">
+    <>
       <label className="g-switch">
         <input
           type="checkbox"
@@ -147,6 +147,7 @@ function Timeline({ trip, items, itemProps }) {
         <span className="g-switch-track" aria-hidden="true" />
         Lukk alle dager
       </label>
+      <div className="g-tl">
       <div className="g-tl-header" aria-hidden="true">
         <span />
         <span>Pris og betaling</span>
@@ -211,6 +212,7 @@ function Timeline({ trip, items, itemProps }) {
         </section>
       )}
     </div>
+    </>
   );
 }
 
