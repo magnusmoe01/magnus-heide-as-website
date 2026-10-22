@@ -471,6 +471,11 @@ function ItemCard({
         !isIncluded(item) ? " r-item-off" : ""
       }`}
       draggable
+      onClick={(e) => {
+        // Hele kortet åpner redigering, unntatt knapper og tilleggene (de har egne handlinger).
+        if (e.target.closest("button, a, input, select, .r-addons")) return;
+        onEdit();
+      }}
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = "move";
         onDragStart();

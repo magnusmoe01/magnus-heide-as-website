@@ -168,10 +168,10 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
                 className="r-icon-btn"
                 aria-pressed={f.icon === k}
                 title={label}
+                aria-label={label}
                 onClick={() => setF((p) => ({ ...p, icon: p.icon === k ? "" : k }))}
               >
                 <span>{emoji}</span>
-                {label}
               </button>
             ))}
             {customIcons.map((c) => (

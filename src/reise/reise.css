@@ -182,6 +182,8 @@ textarea { resize: vertical; }
 .r-item-body { display: grid; gap: 6px; min-width: 0; }
 .r-item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .r-item-price { font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.r-item { cursor: pointer; }
+.r-item:hover { border-color: var(--muted); }
 .r-item:active { cursor: grabbing; }
 .r-item-optional { border-style: dashed; }
 .r-item-off { opacity: 0.55; }
