@@ -755,3 +755,10 @@ img.r-icon-img { padding: 0; object-fit: cover; width: 1.8em; height: 1.8em; }
 .r-cell:hover .r-insert, .r-insert:focus-visible { opacity: 1; }
 .r-insert:hover { color: var(--text); }
 @media (hover: none) { .r-insert { opacity: 1; } }
+
+/* Beskrivelse på kortene i planen (maks tre linjer). */
+.r-desc {
+  font-size: 12.5px; line-height: 1.45; color: var(--muted); white-space: pre-line;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px;
+}
+.r-item-main > .r-muted:empty { display: none; }

@@ -620,6 +620,7 @@ function ItemCard({
             .filter(Boolean)
             .join(" · ")}
         </span>
+        {item.description && <span className="r-desc">{item.description}</span>}
       </button>
       {item.ask_guest || responded ? (
         <div className="r-item-badges">
