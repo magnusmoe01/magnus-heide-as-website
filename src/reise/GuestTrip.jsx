@@ -107,6 +107,23 @@ function Timeline({ trip, items, itemProps }) {
         {showPayment(i) && (
           <span className={`r-pay${i.paid ? " r-pay-paid" : ""}`}>{paymentText(i)}</span>
         )}
+        {itemProps.addonsFor(i).length > 0 && (
+          <div className="g-tl-side-addons">
+            <span className="g-tl-side-label">Tillegg</span>
+            {itemProps.addonsFor(i).map((a) => (
+              <div key={a.id} className={`g-tl-side-addon${a.guest_status === "accepted" ? " is-selected" : ""}`}>
+                <span className="g-tl-side-title">
+                  {a.guest_status === "accepted" && "✓ "}
+                  {a.title}
+                </span>
+                <AddonPrice item={a} currency={itemProps.currency} />
+                {showPayment(a) && (
+                  <span className={`r-pay${a.paid ? " r-pay-paid" : ""}`}>{paymentText(a)}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </aside>
     </div>
   );
@@ -154,6 +171,23 @@ function Timeline({ trip, items, itemProps }) {
         </section>
       )}
     </div>
+  );
+}
+
+/** Pris for et tillegg; uten valgt alternativ vises laveste pris blant valgene. */
+function AddonPrice({ item, currency }) {
+  if (itemTotal(item) > 0) return <PriceTag item={item} currency={currency} className="g-price" />;
+  const prices = (item.options || [])
+    .map((o) => o.price)
+    .filter((p) => p !== null && p !== "")
+    .map(Number);
+  if (!prices.length) return null;
+  return (
+    <span className="r-pricetag g-price">
+      <span>
+        fra <Money amount={Math.min(...prices)} currency={currency} />
+      </span>
+    </span>
   );
 }
 
