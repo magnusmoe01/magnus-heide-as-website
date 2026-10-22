@@ -284,6 +284,7 @@ function Transfer({ item, onOpen }) {
         </span>
         <strong>{route || item.title}</strong>
         <span className="g-muted">{[route && item.title, item.contact].filter(Boolean).join(" · ")}</span>
+        {item.description && <span className="g-transfer-desc">{item.description}</span>}
       </button>
     </div>
   );

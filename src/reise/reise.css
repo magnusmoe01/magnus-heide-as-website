@@ -770,3 +770,4 @@ img.r-icon-img { padding: 0; object-fit: cover; width: 1.8em; height: 1.8em; }
 @media (min-width: 761px) {
   .g-tl-entry .g-option .g-price { display: none; }
 }
+.g-transfer-desc { font-size: 14px; white-space: pre-wrap; margin-top: 4px; }
