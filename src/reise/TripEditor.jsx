@@ -5,7 +5,7 @@ import { supabase } from "./supabase";
 import { ConvertedTotal, Icon, LabelTimeline, Modal, Money, PriceTag, StatusBadge, Tag } from "./ui";
 import {
   CONVERT_CURRENCIES, ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelRuns, nightNumber, paymentText, selectedOption, showPayment,
+  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelRuns, nightNumber, paymentText, inDayProgram, routeText, selectedOption, showPayment,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
 
@@ -208,6 +208,8 @@ export default function TripEditor({ id, onBack }) {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
     const patch = { date };
+    // Transport blir værende transport når den dras rundt i dagsprogrammet.
+    if (track === "experience" && item.track === "transport") track = "transport";
     if (track && track !== item.track) {
       patch.track = track;
       patch.nights = track === "stay" ? 1 : null;
@@ -241,7 +243,7 @@ export default function TripEditor({ id, onBack }) {
 
   function renderCell(date, track) {
     const list = items
-      .filter((i) => i.date === date && i.track === track && !i.parent_id)
+      .filter((i) => i.date === date && !i.parent_id && (track === "stay" ? i.track === "stay" : inDayProgram(i)))
       .sort(sortItems);
     const continuing = date && track === "stay" ? continuingStays(items, date) : [];
     return (
@@ -290,6 +292,11 @@ export default function TripEditor({ id, onBack }) {
         <button className="r-add" onClick={() => setPicking({ date, track })}>
           + {TRACKS[track]}
         </button>
+        {track === "experience" && (
+          <button className="r-add" onClick={() => setPicking({ date, track: "transport" })}>
+            + Sjåfør / transport
+          </button>
+        )}
       </div>
     );
   }
@@ -532,7 +539,7 @@ function ItemCard({
   const option = selectedOption(item);
   return (
     <div
-      className={`r-item${isAddon ? " r-item-addon" : ""}${item.optional ? " r-item-optional" : ""}${
+      className={`r-item${isAddon ? " r-item-addon" : ""}${item.track === "transport" ? " r-item-transport" : ""}${item.optional ? " r-item-optional" : ""}${
         item.guest_status === "declined" ? " r-item-off" : ""
       }`}
       draggable={!isAddon}
@@ -575,6 +582,7 @@ function ItemCard({
         <span className="r-muted">
           {[
             !isAddon && item.track === "stay" && `${item.nights || 1} ${item.nights > 1 ? "netter" : "natt"}`,
+            item.track === "transport" && routeText(item),
             item.links?.length > 0 && `${item.links.length} lenke${item.links.length > 1 ? "r" : ""}`,
           ]
             .filter(Boolean)

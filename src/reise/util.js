@@ -1,5 +1,13 @@
-export const TRACKS = { stay: "Overnatting", experience: "Opplevelse" };
-export const TRACK_PLURAL = { stay: "Overnattinger", experience: "Opplevelser" };
+export const TRACKS = { stay: "Overnatting", experience: "Opplevelse", transport: "Sjåfør / transport" };
+export const TRACK_PLURAL = { stay: "Overnattinger", experience: "Opplevelser", transport: "Sjåfør / transport" };
+
+/** Opplevelser og transport deler dagens program; overnatting ligger på natten. */
+export const inDayProgram = (item) => item.track === "experience" || item.track === "transport";
+
+/** «Nairobi → Naivasha» for transport. */
+export function routeText(item) {
+  return [item.from_place, item.to_place].filter(Boolean).join(" → ");
+}
 
 export const GUEST_STATUS = {
   pending: "Venter på svar",
@@ -46,7 +54,7 @@ export const PRODUCT_COLUMNS = [
 ];
 export const ITEM_COLUMNS = [
   ...PRODUCT_COLUMNS,
-  "product_id", "date", "nights", "time", "end_time", "all_day", "options", "paid", "refundable", "refundable_until", "parent_id", "quantity", "ask_guest", "optional", "sort",
+  "product_id", "date", "nights", "time", "end_time", "all_day", "options", "paid", "refundable", "refundable_until", "parent_id", "from_place", "to_place", "quantity", "ask_guest", "optional", "sort",
 ];
 
 export function pick(obj, keys) {

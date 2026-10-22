@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import { ConvertedTotal, Icon, LabelTimeline, Modal, Money, PriceTag, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
-  formatRange, formatShort, formatTime, endsNextDay, labelRuns, nightNumber, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
+  formatRange, formatShort, formatTime, endsNextDay, labelRuns, nightNumber, inDayProgram, routeText, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
 } from "./util";
 import "./reise.css";
 
@@ -97,8 +97,12 @@ function Timeline({ trip, items, itemProps }) {
   const detail = items.find((i) => i.id === detailId);
   // Kort som henger på den vertikale tidslinjen.
   const entry = (i, extra) => (
-    <div className="g-tl-entry" key={i.id}>
-      <GuestItem item={i} {...itemProps} {...extra} />
+    <div className={`g-tl-entry${i.track === "transport" ? " is-transfer" : ""}`} key={i.id}>
+      {i.track === "transport" ? (
+        <Transfer item={i} onOpen={() => setDetailId(i.id)} />
+      ) : (
+        <GuestItem item={i} {...itemProps} {...extra} />
+      )}
       {/* Egen kolonne for pris og betaling på brede skjermer. */}
       <aside className="g-tl-side">
         <PriceTag item={i} currency={itemProps.currency} className="g-price" />
@@ -147,7 +151,7 @@ function Timeline({ trip, items, itemProps }) {
       </div>
       {days.map((d) => {
         const dayItems = items.filter((i) => i.date === d).sort(sortItems);
-        const experiences = dayItems.filter((i) => i.track === "experience");
+        const experiences = dayItems.filter(inDayProgram);
         const stays = dayItems.filter((i) => i.track === "stay");
         const staying = continuingStays(items, d);
         const open = isOpen(d);
@@ -238,6 +242,27 @@ function Timeline({ trip, items, itemProps }) {
 }
 
 /** Pris for et tillegg; uten valgt alternativ vises laveste pris blant valgene. */
+/** Sjåfør/transport mellom arrangementene: bil på en stiplet linje med en boks ved siden av. */
+function Transfer({ item, onOpen }) {
+  const route = routeText(item);
+  return (
+    <div className="g-transfer">
+      <div className="g-transfer-rail" aria-hidden="true">
+        <span className="g-transfer-icon">
+          <Icon value={item.icon || "driver"} />
+        </span>
+      </div>
+      <button className="g-transfer-box" onClick={onOpen}>
+        <span className="g-transfer-kicker">
+          Vi kjører{formatTime(item) && ` · ${formatTime(item)}`}
+        </span>
+        <strong>{route || item.title}</strong>
+        <span className="g-muted">{[route && item.title, item.contact].filter(Boolean).join(" · ")}</span>
+      </button>
+    </div>
+  );
+}
+
 function AddonPrice({ item, currency }) {
   if (itemTotal(item) > 0) return <PriceTag item={item} currency={currency} className="g-price" />;
   const prices = (item.options || [])
@@ -337,11 +362,17 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
 
       {item.description && <p className="g-desc">{item.description}</p>}
 
-      {(item.location || item.contact) && (
+      {(item.location || item.contact || routeText(item)) && (
         <dl className="g-facts">
+          {routeText(item) && (
+            <>
+              <dt>Rute</dt>
+              <dd>{routeText(item)}</dd>
+            </>
+          )}
           {item.location && (
             <>
-              <dt>Sted</dt>
+              <dt>{item.track === "transport" ? "Møtested" : "Sted"}</dt>
               <dd>
                 <a href={mapsUrl(item.location)} target="_blank" rel="noopener">{item.location}</a>
               </dd>

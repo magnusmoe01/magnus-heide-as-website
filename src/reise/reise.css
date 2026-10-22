@@ -702,3 +702,29 @@ textarea { resize: vertical; }
 .g-staying > span { display: grid; gap: 2px; }
 .g-staying strong { font-weight: 500; }
 .g-staying .g-muted { font-size: 13px; }
+
+/* ---------- Sjåfør / transport ---------- */
+
+.r-item-transport { border-style: dashed; background: var(--surface); }
+
+.g-tl-entry.is-transfer::before { display: none; }
+.g-transfer { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: center; }
+.g-transfer-rail { position: relative; align-self: stretch; display: grid; place-items: center; min-height: 72px; }
+.g-transfer-rail::before {
+  content: ""; position: absolute; left: 50%; top: -6px; bottom: -6px;
+  border-left: 2px dashed var(--muted); transform: translateX(-1px); opacity: 0.6;
+}
+.g-transfer-icon {
+  position: relative; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border); font-size: 18px;
+}
+.g-transfer-icon .r-icon { margin: 0; }
+.g-transfer-box {
+  display: grid; gap: 2px; text-align: left; font: inherit; color: var(--text); cursor: pointer;
+  background: var(--surface-2); border: 1px dashed var(--border); border-radius: var(--radius); padding: 10px 14px;
+}
+.g-transfer-box:hover { border-style: solid; }
+.g-transfer-kicker { font-size: 12px; color: var(--accent); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.g-transfer-box strong { font-weight: 500; }
+.g-transfer-box .g-muted { font-size: 13px; }
+.g-transfer-box .g-muted:empty { display: none; }

@@ -30,6 +30,8 @@ export default function ItemEditor({
     all_day: false,
     icon: "",
     image_url: "",
+    from_place: "",
+    to_place: "",
     quantity: 1,
     ask_guest: false,
     optional: false,
@@ -79,6 +81,7 @@ export default function ItemEditor({
       out.refundable = f.paid && f.refundable;
       out.refundable_until = out.refundable && f.refundable_until ? f.refundable_until : null;
       if (isAddon) out.optional = true;
+      if (f.track === "transport" && !f.icon) out.icon = "driver";
       out.options = out.optional
         ? f.options
             .filter((o) => o.title?.trim())
@@ -236,9 +239,22 @@ export default function ItemEditor({
           <textarea rows={4} value={f.description} onChange={set("description")} />
         </label>
 
+        {isItem && f.track === "transport" && (
+          <div className="r-row">
+            <label className="r-grow">
+              Fra
+              <input value={f.from_place} onChange={set("from_place")} placeholder="f.eks. Nairobi" />
+            </label>
+            <label className="r-grow">
+              Til
+              <input value={f.to_place} onChange={set("to_place")} placeholder="f.eks. Naivasha" />
+            </label>
+          </div>
+        )}
+
         <div className="r-row">
           <label className="r-grow">
-            Sted / adresse
+            {f.track === "transport" ? "Møtested / adresse" : "Sted / adresse"}
             <input value={f.location} onChange={set("location")} />
           </label>
           <label className="r-grow">

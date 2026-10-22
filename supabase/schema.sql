@@ -94,6 +94,16 @@ alter table public.trip_items add column if not exists paid boolean not null def
 alter table public.trip_items add column if not exists refundable boolean not null default false;
 alter table public.trip_items add column if not exists refundable_until date;
 
+-- Sjåfør / transport som egen type, med fra/til
+alter table public.products drop constraint if exists products_track_check;
+alter table public.products add constraint products_track_check
+  check (track in ('stay', 'experience', 'transport'));
+alter table public.trip_items drop constraint if exists trip_items_track_check;
+alter table public.trip_items add constraint trip_items_track_check
+  check (track in ('stay', 'experience', 'transport'));
+alter table public.trip_items add column if not exists from_place text not null default '';
+alter table public.trip_items add column if not exists to_place text not null default '';
+
 -- Tillegg som hører til et arrangement / en overnatting
 alter table public.trip_items add column if not exists parent_id uuid references public.trip_items on delete cascade;
 
