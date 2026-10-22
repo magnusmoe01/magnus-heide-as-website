@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { LabelTimeline, NotConfigured, Tag, usePageMeta } from "./ui";
+import { ConvertedTotal, Icon, LabelTimeline, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
-  formatRange, formatShort, formatTime, labelRuns, ICONS, iconFor, isIncluded, itemTotal, linkLabel, mapsUrl, sortItems, telHref, tripDays,
+  formatRange, formatShort, formatTime, labelRuns, isIncluded, itemTotal, linkLabel, mapsUrl, sortItems, telHref, tripDays,
 } from "./util";
 import "./reise.css";
 
@@ -34,7 +34,7 @@ export default function GuestTrip({ code }) {
     setData((d) => ({ ...d, items: d.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) }));
   const setTrip = (patch) => setData((d) => ({ ...d, trip: { ...d.trip, ...patch } }));
 
-  const itemProps = { code, editable, currency: trip.currency, onChange: updateItem };
+  const itemProps = { code, editable, onChange: updateItem };
   const optional = items.filter((i) => i.optional);
   const tabs = [
     ["timeline", "Tidslinje"],
@@ -139,7 +139,7 @@ function TrackList({ items, itemProps, showTrack }) {
   ));
 }
 
-function GuestItem({ item, code, editable, currency, onChange, showDate, showTrack }) {
+function GuestItem({ item, code, editable, onChange, showDate, showTrack }) {
   const [comment, setComment] = useState(item.guest_comment || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -184,11 +184,11 @@ function GuestItem({ item, code, editable, currency, onChange, showDate, showTra
               .join(" · ")}
           </p>
           <h3>
-            {item.icon && <span className="g-icon" title={ICONS[item.icon]?.[1]}>{iconFor(item)}</span>}
+            <Icon value={item.icon} />
             {item.title}
           </h3>
         </div>
-        {price > 0 && <span className="g-price">{formatMoney(price, currency)}</span>}
+        {price > 0 && <span className="g-price">{formatMoney(price)}</span>}
       </div>
 
       {item.description && <p className="g-desc">{item.description}</p>}
@@ -315,16 +315,21 @@ function Summary({ trip, items, code, editable, onSubmitted }) {
       {base + extra > 0 && (
         <dl className="g-totals">
           <dt>Reisen</dt>
-          <dd>{formatMoney(base, trip.currency)}</dd>
+          <dd>{formatMoney(base)}</dd>
           {extra > 0 && (
             <>
               <dt>Tillegg ({extras.length})</dt>
-              <dd>{formatMoney(extra, trip.currency)}</dd>
+              <dd>{formatMoney(extra)}</dd>
             </>
           )}
           <dt className="g-total">Totalt</dt>
-          <dd className="g-total">{formatMoney(base + extra, trip.currency)}</dd>
+          <dd className="g-total">{formatMoney(base + extra)}</dd>
         </dl>
+      )}
+      {base + extra > 0 && (
+        <p className="g-converted">
+          <ConvertedTotal amount={base + extra} currency={trip.currency} />
+        </p>
       )}
       {editable && (
         <>

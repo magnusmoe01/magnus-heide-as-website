@@ -36,8 +36,9 @@ export const ICONS = {
   info: ["📍", "Annet"],
 };
 
-export function iconFor(item) {
-  return ICONS[item.icon]?.[0] ?? "";
+/** Egne ikoner (emoji eller bilde-URL) som er brukt i listene, uten de faste. */
+export function customIcons(...lists) {
+  return [...new Set(lists.flat().map((x) => x.icon).filter((i) => i && !ICONS[i]))];
 }
 
 export const PRODUCT_COLUMNS = [
@@ -147,7 +148,11 @@ export function formatRange(start, end) {
   return `${formatShort(start)} – ${formatShort(end)}`;
 }
 
-export function formatMoney(n, currency = "NOK") {
+/** Alle priser registreres i KES. Reisens `currency` er valutaen totalen omregnes til. */
+export const PRICE_CURRENCY = "KES";
+export const CONVERT_CURRENCIES = ["NOK", "EUR", "USD", "GBP", "SEK", "DKK"];
+
+export function formatMoney(n, currency = PRICE_CURRENCY) {
   if (n === null || n === undefined || n === "") return "";
   return new Intl.NumberFormat("nb-NO", {
     style: "currency", currency, maximumFractionDigits: 0,

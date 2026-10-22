@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { GUEST_STATUS, formatRange, tagHue } from "./util";
+import { useEffect, useState } from "react";
+import { GUEST_STATUS, ICONS, PRICE_CURRENCY, formatMoney, formatRange, tagHue } from "./util";
 
 export function Modal({ title, onClose, children, wide }) {
   useEffect(() => {
@@ -21,6 +21,15 @@ export function Modal({ title, onClose, children, wide }) {
       </div>
     </div>
   );
+}
+
+/** Fast ikon (nøkkel i ICONS), egen emoji eller bilde-URL. */
+export function Icon({ value }) {
+  if (!value) return null;
+  const preset = ICONS[value];
+  if (preset) return <span className="r-icon" title={preset[1]}>{preset[0]}</span>;
+  if (/^https?:\/\//.test(value)) return <img className="r-icon r-icon-img" src={value} alt="" />;
+  return <span className="r-icon">{value}</span>;
 }
 
 export function StatusBadge({ status }) {
@@ -113,5 +122,51 @@ export function LabelOverview({ summary }) {
         <li className="r-muted">Totalt {dager(total)}</li>
       </ul>
     </div>
+  );
+}
+
+const RATE_CACHE_KEY = `reise-rates-${PRICE_CURRENCY}`;
+
+/** Veiledende kurs fra PRICE_CURRENCY til `target`, hentet maks én gang i døgnet. */
+function useRate(target) {
+  const [rates, setRates] = useState(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(RATE_CACHE_KEY));
+      return cached && Date.now() - cached.at < 864e5 ? cached.rates : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (rates || !target || target === PRICE_CURRENCY) return;
+    let cancelled = false;
+    fetch(`https://open.er-api.com/v6/latest/${PRICE_CURRENCY}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || d.result !== "success") return;
+        setRates(d.rates);
+        try {
+          localStorage.setItem(RATE_CACHE_KEY, JSON.stringify({ at: Date.now(), rates: d.rates }));
+        } catch {
+          // Ikke kritisk – kursen hentes på nytt neste gang.
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [target, rates]);
+
+  return rates?.[target] ?? null;
+}
+
+export function ConvertedTotal({ amount, currency }) {
+  const rate = useRate(currency);
+  if (!rate || currency === PRICE_CURRENCY) return null;
+  return (
+    <span className="r-converted" title="Veiledende omregning etter dagens kurs">
+      ca. {formatMoney(Math.round(amount * rate), currency)}
+    </span>
   );
 }

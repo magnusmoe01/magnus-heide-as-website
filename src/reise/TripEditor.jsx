@@ -1,14 +1,16 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import ItemEditor from "./ItemEditor";
 import { supabase } from "./supabase";
-import { LabelOverview, Modal, StatusBadge, Tag } from "./ui";
+import { ConvertedTotal, Icon, LabelOverview, Modal, StatusBadge, Tag } from "./ui";
 import {
-  ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, iconFor, isIncluded, itemTotal, labelSummary,
+  CONVERT_CURRENCIES, ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
+  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelSummary,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
 
-const META_FIELDS = ["title", "client_name", "code", "start_date", "end_date", "intro", "admin_notes", "status"];
+const META_FIELDS = [
+  "title", "client_name", "code", "start_date", "end_date", "intro", "admin_notes", "status", "currency",
+];
 
 export default function TripEditor({ id, onBack }) {
   const [trip, setTrip] = useState(null);
@@ -198,14 +200,13 @@ export default function TripEditor({ id, onBack }) {
       <div {...dropZone(date, track)}>
         {continuing.map((s) => (
           <div key={s.id} className="r-continuing">
-            ↳ {iconFor(s)} {s.title}
+            ↳ <Icon value={s.icon} />{s.title}
           </div>
         ))}
         {list.map((item) => (
           <ItemCard
             key={item.id}
             item={item}
-            currency={trip.currency}
             onEdit={() => setEditing(item)}
             onDuplicate={() => duplicate(item)}
             onRemove={() => remove(item)}
@@ -267,6 +268,14 @@ export default function TripEditor({ id, onBack }) {
               <input value={draft.code} onChange={setD("code")} />
             </label>
             <label>
+              Omregn til
+              <select value={draft.currency} onChange={setD("currency")}>
+                {CONVERT_CURRENCIES.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            <label>
               Status
               <select value={draft.status} onChange={setD("status")}>
                 {Object.entries(TRIP_STATUS).map(([k, v]) => (
@@ -320,7 +329,12 @@ export default function TripEditor({ id, onBack }) {
             {answered.length} av {asked.length} punkter besvart
             {extras.length > 0 && ` · ${extras.length} tillegg valgt`}
           </p>
-          {total > 0 && <p>Totalt: <strong>{formatMoney(total, trip.currency)}</strong></p>}
+          {total > 0 && (
+            <p>
+              Totalt: <strong>{formatMoney(total)}</strong>
+              <ConvertedTotal amount={total} currency={trip.currency} />
+            </p>
+          )}
           {trip.guest_submitted_at ? (
             <div className="r-guest-msg">
               <span className="r-muted">
@@ -404,14 +418,20 @@ export default function TripEditor({ id, onBack }) {
         />
       )}
       {editing && (
-        <ItemEditor value={editing} mode="item" onSave={saveItem} onCancel={() => setEditing(null)} />
+        <ItemEditor
+          value={editing}
+          mode="item"
+          customIcons={customIcons(products, items)}
+          onSave={saveItem}
+          onCancel={() => setEditing(null)}
+        />
       )}
     </section>
   );
 }
 
 function ItemCard({
-  item, currency, onEdit, onDuplicate, onRemove, onSaveToLibrary,
+  item, onEdit, onDuplicate, onRemove, onSaveToLibrary,
   onResetResponse, onDragStart, onDragEnd,
 }) {
   const price = itemTotal(item);
@@ -440,10 +460,10 @@ function ItemCard({
       <button className="r-item-main" onClick={onEdit}>
         <span className="r-item-head">
           <span className="r-item-title">
-            {item.icon && <span className="r-icon">{iconFor(item)}</span>}
+            <Icon value={item.icon} />
             {item.title}
           </span>
-          {price > 0 && <span className="r-item-price">{formatMoney(price, currency)}</span>}
+          {price > 0 && <span className="r-item-price">{formatMoney(price)}</span>}
         </span>
         <span className="r-muted">
           {[
@@ -535,7 +555,7 @@ function ProductPicker({ products, target, onPick, onBlank, onClose }) {
         {list.map((p) => (
           <li key={p.id}>
             <button className="r-list-main" onClick={() => onPick(p)}>
-              <strong>{iconFor(p)} {p.title}</strong>
+              <strong><Icon value={p.icon} />{p.title}</strong>
               <span className="r-muted">
                 {[TRACKS[p.track], p.location, p.price !== null && `${formatMoney(p.price)} ${p.price_unit}`]
                   .filter(Boolean)

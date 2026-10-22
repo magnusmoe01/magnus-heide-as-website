@@ -319,7 +319,10 @@ textarea { resize: vertical; }
 .r-icon-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--surface-2); }
 .r-icon { margin-right: 4px; }
 .r-allday { align-self: center; padding-top: 16px; }
-.g-icon { margin-right: 8px; }
+.r-icon-img { width: 1.15em; height: 1.15em; object-fit: contain; vertical-align: -0.2em; }
+.r-icon-btn .r-icon { margin: 0; font-size: 16px; }
+.g-item h3 .r-icon { margin-right: 8px; }
+.r-list-main strong .r-icon, .r-continuing .r-icon { margin-right: 6px; }
 
 /* ---------- Byer / kategorier ---------- */
 
@@ -396,3 +399,9 @@ textarea { resize: vertical; }
 @media (prefers-color-scheme: dark) {
   .r-ltl-bar span { background: hsl(var(--h) 45% 55%); }
 }
+
+/* ---------- Omregning ---------- */
+
+.r-converted { display: block; font-size: 13px; color: var(--muted); }
+.g-converted { text-align: right; margin-top: -6px !important; }
+.g-converted .r-converted::after { content: " (veiledende)"; }

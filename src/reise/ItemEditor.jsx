@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal } from "./ui";
+import { Icon, Modal } from "./ui";
 import { ICONS, PRICE_UNITS, TRACKS, normalizeUrl } from "./util";
 
 const toNum = (v) => (v === "" || v === null || v === undefined ? null : Number(v));
@@ -7,7 +7,7 @@ const toNum = (v) => (v === "" || v === null || v === undefined ? null : Number(
 /**
  * Skjema for et element i en reise (mode="item") eller et produkt i biblioteket (mode="product").
  */
-export default function ItemEditor({ value, mode, onSave, onCancel }) {
+export default function ItemEditor({ value, mode, customIcons = [], onSave, onCancel }) {
   const isItem = mode === "item";
   const [f, setF] = useState(() => ({
     track: "experience",
@@ -130,7 +130,27 @@ export default function ItemEditor({ value, mode, onSave, onCancel }) {
                 {label}
               </button>
             ))}
+            {customIcons.map((c) => (
+              <button
+                type="button"
+                key={c}
+                className="r-icon-btn"
+                aria-pressed={f.icon === c}
+                title="Eget ikon"
+                onClick={() => setF((p) => ({ ...p, icon: p.icon === c ? "" : c }))}
+              >
+                <Icon value={c} />
+              </button>
+            ))}
           </div>
+          <label>
+            Eget ikon – emoji eller bilde-URL
+            <input
+              value={ICONS[f.icon] ? "" : f.icon}
+              onChange={(e) => setF((p) => ({ ...p, icon: e.target.value.trim() }))}
+              placeholder="f.eks. 🦁 eller https://…/ikon.png"
+            />
+          </label>
         </fieldset>
 
         <label>
