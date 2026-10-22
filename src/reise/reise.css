@@ -534,3 +534,4 @@ textarea { resize: vertical; }
 .g-item-kicker:empty { display: none; }
 /* Mer luft rundt titlene på arrangementer og overnattinger. */
 .g-item h3 { margin: 6px 0 6px; }
+.g-item-time small { font-size: 12px; font-weight: 400; color: var(--muted); }

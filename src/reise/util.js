@@ -216,7 +216,7 @@ export function timeMode(item) {
 export function formatTime(item) {
   if (item.all_day) return "Hele dagen";
   if (item.time && item.end_time) {
-    return `${item.time}–${item.end_time}${endsNextDay(item) ? " (neste dag)" : ""}`;
+    return `${item.time} – ${item.end_time}${endsNextDay(item) ? " (neste dag)" : ""}`;
   }
   return item.time || "";
 }

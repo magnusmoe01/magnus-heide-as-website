@@ -5,7 +5,7 @@ import { supabase } from "./supabase";
 import { ConvertedTotal, Icon, LabelTimeline, Modal, PriceTag, StatusBadge, Tag } from "./ui";
 import {
   CONVERT_CURRENCIES, ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatNight, formatShort, formatTime, endsNextDay, customIcons, isIncluded, itemTotal, labelRuns, paymentText, selectedOption, showPayment,
+  continuingStays, formatDay, formatMoney, formatNight, formatShort, endsNextDay, customIcons, isIncluded, itemTotal, labelRuns, paymentText, selectedOption, showPayment,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
 
@@ -497,7 +497,7 @@ function ItemCard({
         {item.all_day ? "Hele dagen" : (
           <>
             {item.time}
-            {item.end_time && <span>–{item.end_time}</span>}
+            {item.end_time && <span> – {item.end_time}</span>}
             {endsNextDay(item) && <span className="r-next-day">(neste dag)</span>}
           </>
         )}

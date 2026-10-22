@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import { ConvertedTotal, Icon, LabelTimeline, Money, PriceTag, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
-  formatRange, formatShort, formatTime, labelRuns, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
+  formatRange, formatShort, formatTime, endsNextDay, labelRuns, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
 } from "./util";
 import "./reise.css";
 
@@ -207,9 +207,15 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
       {item.image_url && <img className="g-img" src={item.image_url} alt="" loading="lazy" />}
       <div className="g-item-head">
         <div>
-          {formatTime(item) && <p className="g-item-time">{formatTime(item)}</p>}
+          {formatTime(item) && (
+            <p className="g-item-time">
+              {item.all_day ? "Hele dagen" : item.time}
+              {!item.all_day && item.end_time && ` – ${item.end_time}`}
+              {endsNextDay(item) && <small> (neste dag)</small>}
+            </p>
+          )}
           <p className="g-item-kicker">
-            {[when, showTrack && TRACKS[item.track], item.optional && "Tillegg"]
+            {[when, showTrack && TRACKS[item.track], item.optional && !nested && "Tillegg"]
               .filter(Boolean)
               .join(" · ")}
           </p>
