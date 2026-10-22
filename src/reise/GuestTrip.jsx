@@ -207,8 +207,9 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
       {item.image_url && <img className="g-img" src={item.image_url} alt="" loading="lazy" />}
       <div className="g-item-head">
         <div>
+          {formatTime(item) && <p className="g-item-time">{formatTime(item)}</p>}
           <p className="g-item-kicker">
-            {[formatTime(item), when, (showTrack || item.track === "stay") && TRACKS[item.track], item.optional && "Tillegg"]
+            {[when, (showTrack || item.track === "stay") && TRACKS[item.track], item.optional && "Tillegg"]
               .filter(Boolean)
               .join(" · ")}
           </p>

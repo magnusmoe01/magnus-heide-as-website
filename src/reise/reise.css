@@ -527,3 +527,8 @@ textarea { resize: vertical; }
 /* Mer luft før hver ny dag i tidslinjen. */
 .g-tl-group:has(> .g-tl-day) { margin-top: 22px; }
 .g-tl-group:first-child { margin-top: 0; }
+.g-item-time {
+  margin: 0 0 6px; font-size: 15px; font-weight: 500; color: var(--accent);
+  font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
+}
+.g-item-kicker:empty { display: none; }
