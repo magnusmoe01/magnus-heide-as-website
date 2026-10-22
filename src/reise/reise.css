@@ -669,3 +669,15 @@ textarea { resize: vertical; }
 .r-item-title .r-icon { font-size: 1.2em; vertical-align: 0.02em; }
 .g-tl-collapsed .r-icon { font-size: 1.15em; }
 .g-tl-collapsed .r-icon { vertical-align: 0.04em; }
+
+/* Flytt hele dager opp/ned (admin). */
+.r-day-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.r-day-move { display: inline-flex; gap: 2px; opacity: 0.35; transition: opacity 120ms; }
+.r-tl-day:hover .r-day-move, .r-day-move:focus-within { opacity: 1; }
+.r-day-move button {
+  font: inherit; font-size: 13px; line-height: 1; width: 24px; height: 24px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
+}
+.r-day-move button:hover:not(:disabled) { border-color: var(--muted); }
+.r-day-move button:disabled { opacity: 0.3; cursor: default; }
+@media (hover: none) { .r-day-move { opacity: 1; } }

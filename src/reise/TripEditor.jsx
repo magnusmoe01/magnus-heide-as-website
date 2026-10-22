@@ -149,6 +149,31 @@ export default function TripEditor({ id, onBack }) {
   }
 
 
+  /** Bytter alt innhold (elementer, tillegg og byer/kategorier) mellom to dager. */
+  async function swapDays(a, b) {
+    const fromA = items.filter((i) => i.date === a).map((i) => i.id);
+    const fromB = items.filter((i) => i.date === b).map((i) => i.id);
+    setItems((prev) =>
+      prev.map((i) => (i.date === a ? { ...i, date: b } : i.date === b ? { ...i, date: a } : i))
+    );
+    const labels = { ...(trip.day_labels || {}) };
+    const [la, lb] = [labels[a], labels[b]];
+    delete labels[a];
+    delete labels[b];
+    if (lb) labels[a] = lb;
+    if (la) labels[b] = la;
+    const results = await Promise.all([
+      fromA.length && supabase.from("trip_items").update({ date: b }).in("id", fromA),
+      fromB.length && supabase.from("trip_items").update({ date: a }).in("id", fromB),
+    ]);
+    const failed = results.find((r) => r && r.error);
+    if (failed) {
+      setError(failed.error.message);
+      return load();
+    }
+    if (la || lb) saveDayLabels(labels);
+  }
+
   async function saveDayLabels(next) {
     setTrip((t) => ({ ...t, day_labels: next }));
     const { error } = await supabase.from("trips").update({ day_labels: next }).eq("id", id);
@@ -411,8 +436,30 @@ export default function TripEditor({ id, onBack }) {
             <Fragment key={d}>
             <div className={`r-tl-row r-tl-day${outside ? " r-tl-outside" : ""}`}>
               <div className="r-tl-date">
-                {formatDay(d)}
-                {outside && <span className="r-muted"> (utenfor reisen)</span>}
+                <div className="r-day-head">
+                  <span>
+                    {formatDay(d)}
+                    {outside && <span className="r-muted"> (utenfor reisen)</span>}
+                  </span>
+                  <span className="r-day-move">
+                    <button
+                      title="Flytt dagen opp"
+                      aria-label="Flytt dagen opp"
+                      disabled={idx === 0}
+                      onClick={() => swapDays(d, days[idx - 1])}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      title="Flytt dagen ned"
+                      aria-label="Flytt dagen ned"
+                      disabled={isLast}
+                      onClick={() => swapDays(d, days[idx + 1])}
+                    >
+                      ↓
+                    </button>
+                  </span>
+                </div>
                 <div className="r-tags">
                   {(trip.day_labels?.[d] || []).map((l) => (
                     <Tag key={l} label={l} onRemove={() => removeLabel([d], l)} />
