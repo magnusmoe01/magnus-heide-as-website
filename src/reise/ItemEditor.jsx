@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal } from "./ui";
-import { PRICE_UNITS, TRACKS, normalizeUrl } from "./util";
+import { ICONS, PRICE_UNITS, TRACKS, normalizeUrl } from "./util";
 
 const toNum = (v) => (v === "" || v === null || v === undefined ? null : Number(v));
 
@@ -20,6 +20,9 @@ export default function ItemEditor({ value, mode, onSave, onCancel }) {
     date: "",
     nights: 1,
     time: "",
+    end_time: "",
+    all_day: false,
+    icon: "",
     quantity: 1,
     ask_guest: false,
     optional: false,
@@ -48,6 +51,10 @@ export default function ItemEditor({ value, mode, onSave, onCancel }) {
       out.date = f.date || null;
       out.quantity = toNum(f.quantity) ?? 1;
       out.nights = f.track === "stay" ? toNum(f.nights) || 1 : null;
+      if (f.all_day) {
+        out.time = "";
+        out.end_time = "";
+      }
     }
     try {
       await onSave(out);
@@ -88,12 +95,43 @@ export default function ItemEditor({ value, mode, onSave, onCancel }) {
                 <input type="number" min="1" value={f.nights} onChange={set("nights")} />
               </label>
             ) : null}
-            <label>
-              Tidspunkt
-              <input value={f.time} onChange={set("time")} placeholder="f.eks. 09:30" />
+            {!f.all_day && (
+              <>
+                <label>
+                  Fra
+                  <input type="time" value={f.time} onChange={set("time")} />
+                </label>
+                <label>
+                  Til
+                  <input type="time" value={f.end_time} onChange={set("end_time")} />
+                </label>
+              </>
+            )}
+            <label className="r-inline r-allday">
+              <input type="checkbox" checked={f.all_day} onChange={set("all_day")} />
+              Hele dagen
             </label>
           </div>
         )}
+
+        <fieldset>
+          <legend>Ikon</legend>
+          <div className="r-icons">
+            {Object.entries(ICONS).map(([k, [emoji, label]]) => (
+              <button
+                type="button"
+                key={k}
+                className="r-icon-btn"
+                aria-pressed={f.icon === k}
+                title={label}
+                onClick={() => setF((p) => ({ ...p, icon: p.icon === k ? "" : k }))}
+              >
+                <span>{emoji}</span>
+                {label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
 
         <label>
           Beskrivelse

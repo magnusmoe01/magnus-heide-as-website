@@ -78,6 +78,15 @@ create table if not exists public.trip_items (
 );
 create index if not exists trip_items_trip_id_idx on public.trip_items (trip_id);
 
+-- Ikon og fra/til-tid (lagt til senere)
+alter table public.products add column if not exists icon text not null default '';
+alter table public.trip_items add column if not exists icon text not null default '';
+alter table public.trip_items add column if not exists end_time text not null default '';
+alter table public.trip_items add column if not exists all_day boolean not null default false;
+
+-- By/kategori per dato: {"2026-11-02": ["Oslo"], ...}
+alter table public.trips add column if not exists day_labels jsonb not null default '{}';
+
 -- RLS: kun admin har direkte tilgang. Gjester bruker funksjonene under. -----
 
 alter table public.products enable row level security;

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { GUEST_STATUS } from "./util";
+import { GUEST_STATUS, tagHue } from "./util";
 
 export function Modal({ title, onClose, children, wide }) {
   useEffect(() => {
@@ -48,4 +48,42 @@ export function usePageMeta(title) {
     document.head.appendChild(meta);
     return () => meta.remove();
   }, [title]);
+}
+
+export function Tag({ label, onRemove }) {
+  return (
+    <span className="r-tag" style={{ "--h": tagHue(label) }}>
+      {label}
+      {onRemove && (
+        <button type="button" onClick={onRemove} aria-label={`Fjern ${label}`}>
+          ✕
+        </button>
+      )}
+    </span>
+  );
+}
+
+export function LabelOverview({ summary }) {
+  const { rows, unlabeled, total } = summary;
+  if (rows.length === 0) return null;
+  const dager = (n) => `${n} ${n === 1 ? "dag" : "dager"}`;
+  return (
+    <div className="r-overview">
+      <div className="r-overview-bar" aria-hidden="true">
+        {rows.map(([label, n]) => (
+          <span key={label} style={{ "--h": tagHue(label), flexGrow: n }} />
+        ))}
+        {unlabeled > 0 && <span className="r-overview-none" style={{ flexGrow: unlabeled }} />}
+      </div>
+      <ul>
+        {rows.map(([label, n]) => (
+          <li key={label}>
+            <Tag label={label} /> {dager(n)}
+          </li>
+        ))}
+        {unlabeled > 0 && <li className="r-muted">Uten kategori: {dager(unlabeled)}</li>}
+        <li className="r-muted">Totalt {dager(total)}</li>
+      </ul>
+    </div>
+  );
 }

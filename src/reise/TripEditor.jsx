@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import ItemEditor from "./ItemEditor";
 import { supabase } from "./supabase";
-import { Modal, StatusBadge } from "./ui";
+import { LabelOverview, Modal, StatusBadge, Tag } from "./ui";
 import {
   ITEM_COLUMNS, PRODUCT_COLUMNS, TRACKS, TRACK_PLURAL, TRIP_STATUS,
-  continuingStays, formatDay, formatMoney, formatShort, isIncluded, itemTotal,
+  continuingStays, formatDay, formatMoney, formatShort, formatTime, iconFor, isIncluded, itemTotal, labelSummary,
   pick, slugify, sortItems, tripDays, tripUrl,
 } from "./util";
 
@@ -131,6 +131,36 @@ export default function TripEditor({ id, onBack }) {
     patchItem(item.id, { product_id: data.id });
   }
 
+  async function saveDayLabels(next) {
+    setTrip((t) => ({ ...t, day_labels: next }));
+    const { error } = await supabase.from("trips").update({ day_labels: next }).eq("id", id);
+    if (error) {
+      setError(error.message);
+      load();
+    }
+  }
+
+  function addLabel(dates, label) {
+    const l = label.trim();
+    if (!l) return;
+    const next = { ...(trip.day_labels || {}) };
+    for (const d of dates) {
+      const list = next[d] || [];
+      if (!list.some((x) => x.toLowerCase() === l.toLowerCase())) next[d] = [...list, l];
+    }
+    saveDayLabels(next);
+  }
+
+  function removeLabel(dates, label) {
+    const next = { ...(trip.day_labels || {}) };
+    for (const d of dates) {
+      const list = (next[d] || []).filter((x) => x !== label);
+      if (list.length) next[d] = list;
+      else delete next[d];
+    }
+    saveDayLabels(next);
+  }
+
   function moveTo(itemId, date, track) {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
@@ -168,7 +198,7 @@ export default function TripEditor({ id, onBack }) {
       <div {...dropZone(date, track)}>
         {continuing.map((s) => (
           <div key={s.id} className="r-continuing">
-            ↳ {s.title}
+            ↳ {iconFor(s)} {s.title}
           </div>
         ))}
         {list.map((item) => (
@@ -197,6 +227,9 @@ export default function TripEditor({ id, onBack }) {
     );
   }
 
+  const allLabels = [...new Set(Object.values(trip.day_labels || {}).flat())].sort((a, b) =>
+    a.localeCompare(b, "nb")
+  );
   const asked = items.filter((i) => i.ask_guest && !i.optional);
   const answered = asked.filter((i) => i.guest_status !== "pending");
   const extras = items.filter((i) => i.optional && i.guest_status === "accepted");
@@ -303,6 +336,19 @@ export default function TripEditor({ id, onBack }) {
         </aside>
       </div>
 
+      <DayLabelPanel
+        days={days}
+        labels={allLabels}
+        summary={labelSummary(trip, items)}
+        onAdd={(range, label) => addLabel(range, label)}
+        onRemove={(range, label) => removeLabel(range, label)}
+      />
+      <datalist id="r-day-labels">
+        {allLabels.map((l) => (
+          <option key={l} value={l} />
+        ))}
+      </datalist>
+
       <div className="r-timeline">
         <div className="r-tl-head">
           <span>Dato</span>
@@ -320,6 +366,26 @@ export default function TripEditor({ id, onBack }) {
               <div className="r-tl-date">
                 {formatDay(d)}
                 {outside && <span className="r-muted"> (utenfor reisen)</span>}
+                <div className="r-tags">
+                  {(trip.day_labels?.[d] || []).map((l) => (
+                    <Tag key={l} label={l} onRemove={() => removeLabel([d], l)} />
+                  ))}
+                </div>
+                <input
+                  className="r-tag-input"
+                  list="r-day-labels"
+                  placeholder="+ by / kategori"
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    addLabel([d], e.currentTarget.value);
+                    e.currentTarget.value = "";
+                  }}
+                  onBlur={(e) => {
+                    addLabel([d], e.currentTarget.value);
+                    e.currentTarget.value = "";
+                  }}
+                />
               </div>
               {renderCell(d, "stay")}
               {renderCell(d, "experience")}
@@ -375,7 +441,8 @@ function ItemCard({
     >
       <button className="r-item-main" onClick={onEdit}>
         <span className="r-item-title">
-          {item.time && <span className="r-time">{item.time}</span>}
+          {formatTime(item) && <span className="r-time">{formatTime(item)}</span>}
+          {item.icon && <span className="r-icon">{iconFor(item)}</span>}
           {item.title}
         </span>
         <span className="r-muted">
@@ -446,7 +513,7 @@ function ProductPicker({ products, target, onPick, onBlank, onClose }) {
         {list.map((p) => (
           <li key={p.id}>
             <button className="r-list-main" onClick={() => onPick(p)}>
-              <strong>{p.title}</strong>
+              <strong>{iconFor(p)} {p.title}</strong>
               <span className="r-muted">
                 {[TRACKS[p.track], p.location, p.price !== null && `${formatMoney(p.price)} ${p.price_unit}`]
                   .filter(Boolean)
@@ -463,5 +530,66 @@ function ProductPicker({ products, target, onPick, onBlank, onClose }) {
         </button>
       </div>
     </Modal>
+  );
+}
+
+function DayLabelPanel({ days, labels, summary, onAdd, onRemove }) {
+  const [label, setLabel] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const start = from || days[0];
+  const end = to || from || days[days.length - 1];
+  const range = days.filter((d) => d >= start && d <= end);
+
+  function apply(fn) {
+    if (!label.trim() || range.length === 0) return;
+    fn(range, label.trim());
+  }
+
+  return (
+    <div className="r-card r-labels">
+      <div>
+        <h2>Byer og kategorier</h2>
+        <form
+          className="r-row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            apply(onAdd);
+          }}
+        >
+          <label className="r-grow">
+            By / kategori
+            <input list="r-day-labels" value={label} onChange={(e) => setLabel(e.target.value)} />
+          </label>
+          <label>
+            Fra
+            <select value={from} onChange={(e) => setFrom(e.target.value)}>
+              <option value="">Første dag</option>
+              {days.map((d) => (
+                <option key={d} value={d}>{formatShort(d)}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Til
+            <select value={to} onChange={(e) => setTo(e.target.value)}>
+              <option value="">{from ? "Samme dag" : "Siste dag"}</option>
+              {days.map((d) => (
+                <option key={d} value={d}>{formatShort(d)}</option>
+              ))}
+            </select>
+          </label>
+          <button className="r-btn r-btn-primary" disabled={!label.trim() || !range.length}>
+            Tilordne {range.length > 0 && `(${range.length})`}
+          </button>
+          {labels.includes(label.trim()) && (
+            <button type="button" className="r-btn" onClick={() => apply(onRemove)}>
+              Fjern
+            </button>
+          )}
+        </form>
+      </div>
+      <LabelOverview summary={summary} />
+    </div>
   );
 }

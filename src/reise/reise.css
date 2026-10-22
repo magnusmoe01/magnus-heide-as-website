@@ -294,3 +294,49 @@ textarea { resize: vertical; }
   .g-item { padding: 14px; }
   .g-link { flex: 1 1 auto; justify-content: center; }
 }
+
+/* ---------- Ikoner ---------- */
+
+.r-icons { display: flex; flex-wrap: wrap; gap: 6px; }
+.r-icon-btn {
+  font: inherit; font-size: 12px; color: var(--muted); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.r-icon-btn span { font-size: 16px; }
+.r-icon-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--surface-2); }
+.r-icon { margin-right: 4px; }
+.r-allday { align-self: center; padding-top: 16px; }
+.g-icon { margin-right: 8px; }
+
+/* ---------- Byer / kategorier ---------- */
+
+.r-tag {
+  --h: 30;
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500;
+  font-family: "Inter", system-ui, sans-serif; line-height: 1.4;
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap; vertical-align: middle;
+  background: hsl(var(--h) 55% 90%); color: hsl(var(--h) 45% 28%);
+}
+.r-tag button { font: inherit; font-size: 10px; background: none; border: 0; padding: 0; color: inherit; opacity: 0.6; cursor: pointer; }
+.r-tag button:hover { opacity: 1; }
+.r-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.r-tags:empty { display: none; }
+.r-app .r-tag-input { font-size: 12px; padding: 3px 6px; margin-top: 4px; border-style: dashed; background: transparent; }
+.r-labels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 24px; margin-bottom: 16px; }
+.r-labels h2 { margin-bottom: 8px; }
+.r-overview { display: grid; gap: 8px; font-size: 13px; align-content: start; }
+.r-overview-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; }
+.r-overview-bar span { flex: 1 1 0; background: hsl(var(--h) 50% 60%); }
+.r-overview-bar .r-overview-none { background: var(--border); }
+.r-overview ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.g-hero .r-overview { margin-top: 20px; }
+.g-day h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+@media (prefers-color-scheme: dark) {
+  .r-tag { background: hsl(var(--h) 30% 24%); color: hsl(var(--h) 60% 82%); }
+  .r-overview-bar span { background: hsl(var(--h) 45% 55%); }
+}
+@media (max-width: 900px) {
+  .r-labels { grid-template-columns: 1fr; }
+}

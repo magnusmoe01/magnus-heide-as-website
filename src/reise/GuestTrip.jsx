@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { NotConfigured, usePageMeta } from "./ui";
+import { LabelOverview, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney,
-  formatRange, formatShort, isIncluded, itemTotal, linkLabel, mapsUrl, sortItems, telHref, tripDays,
+  formatRange, formatShort, formatTime, labelSummary, ICONS, iconFor, isIncluded, itemTotal, linkLabel, mapsUrl, sortItems, telHref, tripDays,
 } from "./util";
 import "./reise.css";
 
@@ -50,6 +50,7 @@ export default function GuestTrip({ code }) {
         <h1>{trip.title}</h1>
         {trip.start_date && <p className="g-dates">{formatRange(trip.start_date, trip.end_date)}</p>}
         {trip.intro && <p className="g-intro">{trip.intro}</p>}
+        <LabelOverview summary={labelSummary(trip, items)} />
         {trip.status === "confirmed" && <p className="g-confirmed">✓ Reisen er bekreftet</p>}
       </header>
 
@@ -92,7 +93,10 @@ function Timeline({ trip, items, itemProps }) {
         const experiences = dayItems.filter((i) => i.track === "experience");
         return (
           <section className="g-day" key={d}>
-            <h2>{formatDay(d)}</h2>
+            <h2>
+              {formatDay(d)}
+              {(trip.day_labels?.[d] || []).map((l) => <Tag key={l} label={l} />)}
+            </h2>
             {experiences.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
             {stays.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
             {staying.map((s) => (
@@ -100,7 +104,7 @@ function Timeline({ trip, items, itemProps }) {
                 🛏 Overnatting: {s.title}
               </p>
             ))}
-            {dayItems.length === 0 && staying.length === 0 && <p className="g-muted">Fri dag</p>}
+            {dayItems.length === 0 && staying.length === 0 && <p className="g-muted">Ingen aktiviteter registrert</p>}
           </section>
         );
       })}
@@ -164,11 +168,14 @@ function GuestItem({ item, code, editable, currency, onChange, showDate, showTra
       <div className="g-item-head">
         <div>
           <p className="g-item-kicker">
-            {[item.time, when, (showTrack || item.track === "stay") && TRACKS[item.track], item.optional && "Tillegg"]
+            {[formatTime(item), when, (showTrack || item.track === "stay") && TRACKS[item.track], item.optional && "Tillegg"]
               .filter(Boolean)
               .join(" · ")}
           </p>
-          <h3>{item.title}</h3>
+          <h3>
+            {item.icon && <span className="g-icon" title={ICONS[item.icon]?.[1]}>{iconFor(item)}</span>}
+            {item.title}
+          </h3>
         </div>
         {price > 0 && <span className="g-price">{formatMoney(price, currency)}</span>}
       </div>

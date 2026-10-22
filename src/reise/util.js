@@ -17,12 +17,35 @@ export const TRIP_STATUS = {
 
 export const PRICE_UNITS = ["per gruppe", "per person", "per natt", "per stk"];
 
+export const ICONS = {
+  car: ["🚗", "Bil"],
+  driver: ["🚐", "Sjåfør"],
+  bus: ["🚌", "Buss"],
+  boat: ["🚤", "Båt"],
+  ferry: ["⛴️", "Ferge"],
+  plane: ["✈️", "Fly"],
+  train: ["🚆", "Tog"],
+  helicopter: ["🚁", "Helikopter"],
+  hotel: ["🏨", "Hotell"],
+  cabin: ["🏡", "Hytte"],
+  food: ["🍽️", "Mat"],
+  hike: ["🥾", "Tur"],
+  ski: ["⛷️", "Ski"],
+  fishing: ["🎣", "Fiske"],
+  activity: ["🎟️", "Aktivitet"],
+  info: ["📍", "Annet"],
+};
+
+export function iconFor(item) {
+  return ICONS[item.icon]?.[0] ?? "";
+}
+
 export const PRODUCT_COLUMNS = [
-  "track", "title", "description", "location", "contact", "links", "price", "price_unit",
+  "track", "icon", "title", "description", "location", "contact", "links", "price", "price_unit",
 ];
 export const ITEM_COLUMNS = [
   ...PRODUCT_COLUMNS,
-  "product_id", "date", "nights", "time", "quantity", "ask_guest", "optional", "sort",
+  "product_id", "date", "nights", "time", "end_time", "all_day", "quantity", "ask_guest", "optional", "sort",
 ];
 
 export function pick(obj, keys) {
@@ -50,6 +73,28 @@ export function tripDays(trip, items) {
   const set = new Set(dateRange(trip.start_date, trip.end_date));
   for (const i of items) if (i.date) set.add(i.date);
   return [...set].sort();
+}
+
+/** Stabil fargetone per by/kategori. */
+export function tagHue(label) {
+  let h = 0;
+  for (const c of label.toLowerCase()) h = (h * 31 + c.charCodeAt(0)) % 360;
+  return h;
+}
+
+/** Antall dager per by/kategori. En dag med to kategorier teller i begge. */
+export function labelSummary(trip, items) {
+  const labels = trip.day_labels || {};
+  const days = tripDays(trip, items);
+  const counts = new Map();
+  let unlabeled = 0;
+  for (const d of days) {
+    const list = labels[d] || [];
+    if (list.length === 0) unlabeled++;
+    for (const l of list) counts.set(l, (counts.get(l) || 0) + 1);
+  }
+  const rows = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "nb"));
+  return { rows, unlabeled, total: days.length };
 }
 
 const dayFmt = new Intl.DateTimeFormat("nb-NO", {
@@ -93,7 +138,17 @@ export function isIncluded(item) {
 }
 
 export function sortItems(a, b) {
-  return (a.time || "").localeCompare(b.time || "") || a.sort - b.sort;
+  return (
+    Number(!!b.all_day) - Number(!!a.all_day) ||
+    (a.time || "").localeCompare(b.time || "") ||
+    a.sort - b.sort
+  );
+}
+
+export function formatTime(item) {
+  if (item.all_day) return "Hele dagen";
+  if (item.time && item.end_time) return `${item.time}–${item.end_time}`;
+  return item.time || "";
 }
 
 /** Overnattinger som startet tidligere og fortsatt gjelder natten til `day`. */
@@ -113,12 +168,11 @@ export function slugify(s) {
     .slice(0, 40);
 }
 
-export function randomCode(prefix = "") {
+/** 5 tegn uten forvekslbare tegn (0/o, 1/l/i). */
+export function randomCode() {
   const chars = "abcdefghjkmnpqrstuvwxyz23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(8));
-  const rand = [...bytes].map((b) => chars[b % chars.length]).join("");
-  const base = slugify(prefix);
-  return base ? `${base}-${rand.slice(0, 6)}` : rand;
+  const bytes = crypto.getRandomValues(new Uint8Array(5));
+  return [...bytes].map((b) => chars[b % chars.length]).join("");
 }
 
 export function normalizeUrl(url) {

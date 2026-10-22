@@ -153,13 +153,17 @@ function TripList({ onOpen }) {
   }, []);
 
   async function create() {
-    const { data, error } = await supabase
-      .from("trips")
-      .insert({ title: "Ny reise", code: randomCode() })
-      .select()
-      .single();
-    if (error) return setError(error.message);
-    onOpen(data.id);
+    // Prøv på nytt hvis den tilfeldige koden allerede er i bruk.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data, error } = await supabase
+        .from("trips")
+        .insert({ title: "Ny reise", code: randomCode() })
+        .select()
+        .single();
+      if (!error) return onOpen(data.id);
+      if (error.code !== "23505") return setError(error.message);
+    }
+    setError("Fant ingen ledig kode. Prøv igjen.");
   }
 
   if (!trips) return <p className="r-muted">Laster…</p>;

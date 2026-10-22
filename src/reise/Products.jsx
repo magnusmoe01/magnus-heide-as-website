@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ItemEditor from "./ItemEditor";
 import { supabase } from "./supabase";
-import { PRODUCT_COLUMNS, TRACK_PLURAL, formatMoney, pick } from "./util";
+import { PRODUCT_COLUMNS, TRACK_PLURAL, formatMoney, iconFor, pick } from "./util";
 
 export default function Products() {
   const [products, setProducts] = useState(null);
@@ -62,7 +62,7 @@ export default function Products() {
               {list.map((p) => (
                 <li key={p.id} className="r-list-row">
                   <button className="r-list-main" onClick={() => setEditing(p)}>
-                    <strong>{p.title}</strong>
+                    <strong>{iconFor(p)} {p.title}</strong>
                     <span className="r-muted">
                       {[p.location, p.contact].filter(Boolean).join(" · ")}
                     </span>
