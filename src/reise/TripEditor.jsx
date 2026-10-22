@@ -621,9 +621,8 @@ function ItemCard({
             .join(" · ")}
         </span>
       </button>
-      {(item.optional && !isAddon) || item.ask_guest || responded ? (
+      {item.ask_guest || responded ? (
         <div className="r-item-badges">
-          {item.optional && !isAddon && <span className="r-badge r-badge-extra">Tillegg</span>}
           {/* «Venter på svar» bare når admin har bedt om bekreftelse. */}
           {(item.ask_guest || responded) && <StatusBadge status={item.guest_status} />}
           {responded && (
