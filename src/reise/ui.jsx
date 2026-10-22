@@ -17,7 +17,7 @@ export function Modal({ title, onClose, children, wide }) {
             ✕
           </button>
         </div>
-        {children}
+        <div className="r-modal-body">{children}</div>
       </div>
     </div>
   );
