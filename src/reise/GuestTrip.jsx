@@ -128,6 +128,7 @@ function Timeline({ trip, items, itemProps, onlyDays }) {
         {showPayment(i) && (
           <span className={`r-pay${i.paid ? " r-pay-paid" : ""}`}>{paymentText(i)}</span>
         )}
+        <OptionPrices item={i} currency={itemProps.currency} />
         {itemProps.addonsFor(i).length > 0 && (
           <div className="g-tl-side-addons">
             <span className="g-tl-side-label">Tillegg</span>
@@ -137,7 +138,11 @@ function Timeline({ trip, items, itemProps, onlyDays }) {
                   {a.guest_status === "accepted" && "✓ "}
                   {a.title}
                 </span>
-                <AddonPrice item={a} currency={itemProps.currency} />
+                {a.options?.length > 0 ? (
+                  <OptionPrices item={a} currency={itemProps.currency} />
+                ) : (
+                  <AddonPrice item={a} currency={itemProps.currency} />
+                )}
                 {showPayment(a) && (
                   <span className={`r-pay${a.paid ? " r-pay-paid" : ""}`}>{paymentText(a)}</span>
                 )}
@@ -281,6 +286,31 @@ function Transfer({ item, onOpen }) {
         <span className="g-muted">{[route && item.title, item.contact].filter(Boolean).join(" · ")}</span>
       </button>
     </div>
+  );
+}
+
+/** Pris per valgmulighet i pris-kolonnen, med gjestens valg markert. */
+function OptionPrices({ item, currency }) {
+  if (!item.optional || !item.options?.length) return null;
+  const chosen = selectedOption(item);
+  return (
+    <ul className="g-tl-side-options">
+      {item.options.map((o) => (
+        <li key={o.id} className={chosen?.id === o.id ? "is-selected" : ""}>
+          <span className="g-tl-side-title">
+            {chosen?.id === o.id && "✓ "}
+            {o.title}
+          </span>
+          {o.price !== null && o.price !== "" && (
+            <span className="r-pricetag g-price">
+              <span>
+                <Money amount={Number(o.price)} currency={currency} />
+              </span>
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 
