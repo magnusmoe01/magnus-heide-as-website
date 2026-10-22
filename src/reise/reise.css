@@ -303,7 +303,6 @@ textarea { resize: vertical; }
   .g-layout { grid-template-columns: 1fr; }
   .g-summary { position: static; }
   .g-hero { padding-top: 32px; }
-  .g-item { padding: 14px; }
   .g-link { flex: 1 1 auto; justify-content: center; }
 }
 
@@ -405,3 +404,12 @@ textarea { resize: vertical; }
 .r-converted { display: block; font-size: 13px; color: var(--muted); }
 .g-converted { text-align: right; margin-top: -6px !important; }
 .g-converted .r-converted::after { content: " (veiledende)"; }
+
+/* ---------- Bilder ---------- */
+
+.r-img-preview { display: block; max-width: 100%; max-height: 180px; border-radius: 8px; object-fit: cover; }
+.g-item { overflow: hidden; }
+.g-img {
+  display: block; width: calc(100% + 32px); max-width: none; margin: -16px -16px 0;
+  aspect-ratio: 16 / 9; object-fit: cover; background: var(--surface-2);
+}

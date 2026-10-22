@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { uploadImage } from "./library";
 import { Icon, Modal } from "./ui";
 import { ICONS, PRICE_UNITS, TRACKS, normalizeUrl } from "./util";
 
@@ -23,6 +24,7 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
     end_time: "",
     all_day: false,
     icon: "",
+    image_url: "",
     quantity: 1,
     ask_guest: false,
     optional: false,
@@ -30,6 +32,25 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
     links: value.links?.length ? value.links : [],
   }));
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInput = useRef(null);
+
+  async function onFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const url = await uploadImage(file);
+      setF((p) => ({ ...p, image_url: url }));
+    } catch (err) {
+      setUploadError(`Opplasting feilet: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const set = (k) => (e) =>
     setF((prev) => ({ ...prev, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
@@ -170,6 +191,34 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
         </div>
 
         <fieldset>
+          <legend>Bilde</legend>
+          {f.image_url && <img className="r-img-preview" src={f.image_url} alt="" />}
+          <div className="r-row">
+            <button
+              type="button"
+              className="r-btn r-btn-small"
+              disabled={uploading}
+              onClick={() => fileInput.current.click()}
+            >
+              {uploading ? "Laster opp…" : f.image_url ? "Bytt bilde" : "Last opp bilde"}
+            </button>
+            <input ref={fileInput} type="file" accept="image/*" hidden onChange={onFile} />
+            <input
+              className="r-grow"
+              placeholder="…eller lim inn bilde-URL"
+              value={f.image_url}
+              onChange={set("image_url")}
+            />
+            {f.image_url && (
+              <button type="button" className="r-btn r-btn-small r-btn-ghost" onClick={() => setF((p) => ({ ...p, image_url: "" }))}>
+                Fjern
+              </button>
+            )}
+          </div>
+          {uploadError && <p className="r-error">{uploadError}</p>}
+        </fieldset>
+
+        <fieldset>
           <legend>Lenker (booking, bekreftelse, info)</legend>
           {f.links.map((l, i) => (
             <div className="r-row" key={i}>
@@ -241,7 +290,7 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
           <button type="button" className="r-btn" onClick={onCancel}>
             Avbryt
           </button>
-          <button className="r-btn r-btn-primary" disabled={saving}>
+          <button className="r-btn r-btn-primary" disabled={saving || uploading}>
             {saving ? "Lagrer…" : "Lagre"}
           </button>
         </div>

@@ -176,6 +176,7 @@ function GuestItem({ item, code, editable, onChange, showDate, showTrack }) {
         isIncluded(item) ? "" : " g-off"
       }`}
     >
+      {item.image_url && <img className="g-img" src={item.image_url} alt="" loading="lazy" />}
       <div className="g-item-head">
         <div>
           <p className="g-item-kicker">

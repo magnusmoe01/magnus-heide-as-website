@@ -87,6 +87,22 @@ alter table public.trip_items add column if not exists all_day boolean not null 
 -- By/kategori per dato: {"2026-11-02": ["Oslo"], ...}
 alter table public.trips add column if not exists day_labels jsonb not null default '{}';
 
+-- Bilder
+alter table public.products add column if not exists image_url text not null default '';
+alter table public.trip_items add column if not exists image_url text not null default '';
+
+insert into storage.buckets (id, name, public) values ('reise-bilder', 'reise-bilder', true)
+on conflict (id) do nothing;
+drop policy if exists reise_bilder_admin_insert on storage.objects;
+create policy reise_bilder_admin_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'reise-bilder' and public.is_admin());
+drop policy if exists reise_bilder_admin_update on storage.objects;
+create policy reise_bilder_admin_update on storage.objects for update to authenticated
+  using (bucket_id = 'reise-bilder' and public.is_admin());
+drop policy if exists reise_bilder_admin_delete on storage.objects;
+create policy reise_bilder_admin_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'reise-bilder' and public.is_admin());
+
 -- RLS: kun admin har direkte tilgang. Gjester bruker funksjonene under. -----
 
 alter table public.products enable row level security;

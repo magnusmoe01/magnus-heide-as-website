@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import ItemEditor from "./ItemEditor";
+import { findOrCreateProduct } from "./library";
 import { supabase } from "./supabase";
 import { ConvertedTotal, Icon, LabelOverview, Modal, StatusBadge, Tag } from "./ui";
 import {
@@ -79,9 +80,20 @@ export default function TripEditor({ id, onBack }) {
   }
 
   async function insertItem(row) {
+    // Alle elementer hører til et produkt i biblioteket.
+    let productId = row.product_id;
+    if (!productId) {
+      try {
+        const { product, created } = await findOrCreateProduct(row, products);
+        if (created) setProducts((prev) => [...prev, product]);
+        productId = product.id;
+      } catch (err) {
+        return setError(err.message);
+      }
+    }
     const { data, error } = await supabase
       .from("trip_items")
-      .insert({ ...pick(row, ITEM_COLUMNS), trip_id: id })
+      .insert({ ...pick(row, ITEM_COLUMNS), product_id: productId, trip_id: id })
       .select()
       .single();
     if (error) return setError(error.message);
@@ -122,16 +134,6 @@ export default function TripEditor({ id, onBack }) {
     }
   }
 
-  async function saveToLibrary(item) {
-    const { data, error } = await supabase
-      .from("products")
-      .insert(pick(item, PRODUCT_COLUMNS))
-      .select()
-      .single();
-    if (error) return setError(error.message);
-    setProducts((prev) => [...prev, data]);
-    patchItem(item.id, { product_id: data.id });
-  }
 
   async function saveDayLabels(next) {
     setTrip((t) => ({ ...t, day_labels: next }));
@@ -210,7 +212,6 @@ export default function TripEditor({ id, onBack }) {
             onEdit={() => setEditing(item)}
             onDuplicate={() => duplicate(item)}
             onRemove={() => remove(item)}
-            onSaveToLibrary={() => saveToLibrary(item)}
             onResetResponse={() => patchItem(item.id, { guest_status: "pending", guest_comment: "" })}
             onDragStart={() => setDragId(item.id)}
             onDragEnd={() => {
@@ -431,7 +432,7 @@ export default function TripEditor({ id, onBack }) {
 }
 
 function ItemCard({
-  item, onEdit, onDuplicate, onRemove, onSaveToLibrary,
+  item, onEdit, onDuplicate, onRemove,
   onResetResponse, onDragStart, onDragEnd,
 }) {
   const price = itemTotal(item);
@@ -469,6 +470,7 @@ function ItemCard({
           {[
             item.track === "stay" && `${item.nights || 1} ${item.nights > 1 ? "netter" : "natt"}`,
             item.links?.length > 0 && `${item.links.length} lenke${item.links.length > 1 ? "r" : ""}`,
+            item.image_url && "bilde",
           ]
             .filter(Boolean)
             .join(" · ")}
@@ -488,9 +490,6 @@ function ItemCard({
       {item.guest_comment && <p className="r-comment">«{item.guest_comment}»</p>}
       <div className="r-item-actions">
         <button className="r-linkbtn" onClick={onDuplicate}>Dupliser</button>
-        {!item.product_id && (
-          <button className="r-linkbtn" onClick={onSaveToLibrary}>Til bibliotek</button>
-        )}
         <button className="r-linkbtn r-danger" onClick={onRemove}>Slett</button>
       </div>
       </div>

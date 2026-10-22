@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ItemEditor from "./ItemEditor";
+import { linkOrphanItems } from "./library";
 import { supabase } from "./supabase";
 import { PRODUCT_COLUMNS, TRACK_PLURAL, customIcons, formatMoney, pick } from "./util";
 import { Icon } from "./ui";
@@ -12,7 +13,13 @@ export default function Products() {
   async function load() {
     const { data, error } = await supabase.from("products").select("*").order("title");
     if (error) setError(error.message);
-    setProducts(data ?? []);
+    let list = data ?? [];
+    try {
+      list = await linkOrphanItems(list);
+    } catch (err) {
+      setError(err.message);
+    }
+    setProducts(list.sort((a, b) => a.title.localeCompare(b.title, "nb")));
   }
 
   useEffect(() => {

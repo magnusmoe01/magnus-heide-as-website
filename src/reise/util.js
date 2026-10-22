@@ -42,7 +42,7 @@ export function customIcons(...lists) {
 }
 
 export const PRODUCT_COLUMNS = [
-  "track", "icon", "title", "description", "location", "contact", "links", "price", "price_unit",
+  "track", "icon", "image_url", "title", "description", "location", "contact", "links", "price", "price_unit",
 ];
 export const ITEM_COLUMNS = [
   ...PRODUCT_COLUMNS,
