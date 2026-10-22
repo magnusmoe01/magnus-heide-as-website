@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { ConvertedTotal, Icon, LabelTimeline, Money, PriceTag, NotConfigured, Tag, usePageMeta } from "./ui";
+import { ConvertedTotal, Icon, LabelTimeline, Modal, Money, PriceTag, NotConfigured, Tag, usePageMeta } from "./ui";
 import {
   GUEST_STATUS, TRACKS, TRACK_PLURAL, addDays, continuingStays, formatDay, formatMoney, formatNight,
   formatRange, formatShort, formatTime, endsNextDay, labelRuns, isIncluded, itemTotal, paymentText, selectedOption, showPayment, linkLabel, mapsUrl, sortItems, telHref, tripDays,
@@ -92,6 +92,9 @@ function Timeline({ trip, items, itemProps }) {
   const [dayOpen, setDayOpen] = useState({});
   const isOpen = (d) => dayOpen[d] ?? !collapseAll;
   const toggleDay = (d) => setDayOpen((prev) => ({ ...prev, [d]: !isOpen(d) }));
+  // Popup med full info når man trykker på en tittel i en lukket dag.
+  const [detailId, setDetailId] = useState(null);
+  const detail = items.find((i) => i.id === detailId);
   // Kort som henger på den vertikale tidslinjen.
   const entry = (i, extra) => (
     <div className="g-tl-entry" key={i.id}>
@@ -148,7 +151,7 @@ function Timeline({ trip, items, itemProps }) {
         const stays = dayItems.filter((i) => i.track === "stay");
         const staying = continuingStays(items, d);
         const open = isOpen(d);
-        const stayNames = [...stays, ...staying].map((s) => s.title);
+        const allStays = [...stays, ...staying];
         return (
           <Fragment key={d}>
             <section className="g-tl-group">
@@ -171,14 +174,22 @@ function Timeline({ trip, items, itemProps }) {
                   {experiences.map((i) => (
                     <li key={i.id}>
                       {formatTime(i) && <span className="g-tl-collapsed-time">{formatTime(i)}</span>}
-                      <Icon value={i.icon} />
-                      {i.title}
+                      <button className="g-tl-collapsed-link" onClick={() => setDetailId(i.id)}>
+                        <Icon value={i.icon} />
+                        {i.title}
+                      </button>
                     </li>
                   ))}
                   {experiences.length === 0 && <li className="g-muted">Ingen aktiviteter registrert</li>}
-                  {stayNames.length > 0 && (
-                    <li className="g-muted">Overnatting: {stayNames.join(", ")}</li>
-                  )}
+                  {allStays.map((s) => (
+                    <li key={s.id} className="g-muted">
+                      Overnatting:{" "}
+                      <button className="g-tl-collapsed-link" onClick={() => setDetailId(s.id)}>
+                        <Icon value={s.icon} />
+                        {s.title}
+                      </button>
+                    </li>
+                  ))}
                 </ul>
               )}
             </section>
@@ -205,6 +216,13 @@ function Timeline({ trip, items, itemProps }) {
         </section>
       )}
     </div>
+      {detail && (
+        <Modal title={detail.title} onClose={() => setDetailId(null)}>
+          <div className="g-detail">
+            <GuestItem item={detail} {...itemProps} showDate />
+          </div>
+        </Modal>
+      )}
     </>
   );
 }

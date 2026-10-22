@@ -653,3 +653,13 @@ textarea { resize: vertical; }
   .r-ltl-dates { grid-row: 1; grid-column: 3; font-size: 13px; text-align: right; }
   .r-ltl-len { display: inline; }
 }
+
+.g-tl-collapsed-link {
+  font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-align: left;
+  text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px;
+}
+.g-tl-collapsed-link:hover { text-decoration-color: currentColor; }
+.g-detail { padding-bottom: 20px; }
+.g-detail .g-item { border: 0; padding: 0; overflow: visible; }
+.g-detail .g-img { width: 100%; margin: 0 0 4px; border-radius: 8px; }
+.g-detail .g-item-head h3 { display: none; }
