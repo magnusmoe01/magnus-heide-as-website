@@ -189,14 +189,14 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
     });
   }
 
-  const when =
-    item.track === "stay" && item.date
+  // Datoer vises bare i listene; i tidslinjen gir plasseringen datoen.
+  const when = !showDate || !item.date
+    ? ""
+    : item.track === "stay"
       ? `${formatShort(item.date)} – ${formatShort(addDays(item.date, item.nights || 1))} · ${
           item.nights || 1
         } ${item.nights > 1 ? "netter" : "natt"}`
-      : showDate && item.date
-        ? formatShort(item.date)
-        : "";
+      : formatShort(item.date);
 
   return (
     <article
@@ -209,7 +209,7 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
         <div>
           {formatTime(item) && <p className="g-item-time">{formatTime(item)}</p>}
           <p className="g-item-kicker">
-            {[when, (showTrack || item.track === "stay") && TRACKS[item.track], item.optional && "Tillegg"]
+            {[when, showTrack && TRACKS[item.track], item.optional && "Tillegg"]
               .filter(Boolean)
               .join(" · ")}
           </p>
