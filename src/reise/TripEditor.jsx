@@ -205,10 +205,8 @@ export default function TripEditor({ id, onBack }) {
           <ItemCard
             key={item.id}
             item={item}
-            days={days}
             currency={trip.currency}
             onEdit={() => setEditing(item)}
-            onMove={(d) => moveTo(item.id, d || null)}
             onDuplicate={() => duplicate(item)}
             onRemove={() => remove(item)}
             onSaveToLibrary={() => saveToLibrary(item)}
@@ -369,28 +367,14 @@ export default function TripEditor({ id, onBack }) {
                   {(trip.day_labels?.[d] || []).map((l) => (
                     <Tag key={l} label={l} onRemove={() => removeLabel([d], l)} />
                   ))}
+                  <TagAdder onAdd={(l) => addLabel([d], l)} />
                 </div>
-                <input
-                  className="r-tag-input"
-                  list="r-day-labels"
-                  placeholder="+ by / kategori"
-                  onKeyDown={(e) => {
-                    if (e.key !== "Enter") return;
-                    e.preventDefault();
-                    addLabel([d], e.currentTarget.value);
-                    e.currentTarget.value = "";
-                  }}
-                  onBlur={(e) => {
-                    addLabel([d], e.currentTarget.value);
-                    e.currentTarget.value = "";
-                  }}
-                />
               </div>
               {renderCell(d, "experience")}
             </div>
             {(!isLast || hasStay) && (
               <div className="r-tl-row r-tl-night">
-                <div className="r-tl-date">🌙 {formatNight(d)}</div>
+                <div className="r-tl-date">{formatNight(d)}</div>
                 {renderCell(d, "stay")}
               </div>
             )}
@@ -427,11 +411,10 @@ export default function TripEditor({ id, onBack }) {
 }
 
 function ItemCard({
-  item, days, currency, onEdit, onMove, onDuplicate, onRemove, onSaveToLibrary,
+  item, currency, onEdit, onDuplicate, onRemove, onSaveToLibrary,
   onResetResponse, onDragStart, onDragEnd,
 }) {
   const price = itemTotal(item);
-  const dayOptions = item.date && !days.includes(item.date) ? [...days, item.date] : days;
   return (
     <div
       className={`r-item${item.optional ? " r-item-optional" : ""}${
@@ -444,16 +427,26 @@ function ItemCard({
       }}
       onDragEnd={onDragEnd}
     >
+      <div className="r-item-time">
+        {item.all_day ? "Hele dagen" : (
+          <>
+            {item.time}
+            {item.end_time && <span>–{item.end_time}</span>}
+          </>
+        )}
+      </div>
+      <div className="r-item-body">
       <button className="r-item-main" onClick={onEdit}>
-        <span className="r-item-title">
-          {formatTime(item) && <span className="r-time">{formatTime(item)}</span>}
-          {item.icon && <span className="r-icon">{iconFor(item)}</span>}
-          {item.title}
+        <span className="r-item-head">
+          <span className="r-item-title">
+            {item.icon && <span className="r-icon">{iconFor(item)}</span>}
+            {item.title}
+          </span>
+          {price > 0 && <span className="r-item-price">{formatMoney(price, currency)}</span>}
         </span>
         <span className="r-muted">
           {[
             item.track === "stay" && `${item.nights || 1} ${item.nights > 1 ? "netter" : "natt"}`,
-            price > 0 && formatMoney(price, currency),
             item.links?.length > 0 && `${item.links.length} lenke${item.links.length > 1 ? "r" : ""}`,
           ]
             .filter(Boolean)
@@ -473,23 +466,46 @@ function ItemCard({
       )}
       {item.guest_comment && <p className="r-comment">«{item.guest_comment}»</p>}
       <div className="r-item-actions">
-        <select
-          value={item.date ?? ""}
-          onChange={(e) => onMove(e.target.value)}
-          aria-label="Flytt til dato"
-        >
-          {dayOptions.map((d) => (
-            <option key={d} value={d}>{formatShort(d)}</option>
-          ))}
-          <option value="">Uten dato</option>
-        </select>
         <button className="r-linkbtn" onClick={onDuplicate}>Dupliser</button>
         {!item.product_id && (
           <button className="r-linkbtn" onClick={onSaveToLibrary}>Til bibliotek</button>
         )}
         <button className="r-linkbtn r-danger" onClick={onRemove}>Slett</button>
       </div>
+      </div>
     </div>
+  );
+}
+
+function TagAdder({ onAdd }) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button className="r-tag-add" onClick={() => setOpen(true)} aria-label="Legg til by eller kategori" title="Legg til by eller kategori">
+        +
+      </button>
+    );
+  }
+  const commit = (input) => {
+    onAdd(input.value);
+    setOpen(false);
+  };
+  return (
+    <input
+      className="r-tag-input"
+      list="r-day-labels"
+      placeholder="By / kategori"
+      autoFocus
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit(e.currentTarget);
+        } else if (e.key === "Escape") {
+          setOpen(false);
+        }
+      }}
+      onBlur={(e) => commit(e.currentTarget)}
+    />
   );
 }
 

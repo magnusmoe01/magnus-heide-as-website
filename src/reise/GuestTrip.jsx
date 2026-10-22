@@ -103,7 +103,7 @@ function Timeline({ trip, items, itemProps }) {
             </section>
             {(stays.length > 0 || staying.length > 0) && (
               <section className="g-night">
-                <h3 className="g-night-label">🌙 {formatNight(d)}</h3>
+                <h3 className="g-night-label">{formatNight(d)}</h3>
                 {stays.map((i) => <GuestItem key={i.id} item={i} {...itemProps} />)}
                 {staying.map((s) => (
                   <p className="g-staying" key={s.id}>

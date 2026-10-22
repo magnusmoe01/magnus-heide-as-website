@@ -174,15 +174,19 @@ textarea { resize: vertical; }
 
 .r-item {
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 8px 10px; display: grid; gap: 6px; cursor: grab;
+  padding: 8px 10px; display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: 10px; cursor: grab;
 }
+.r-item-time { font-size: 12px; line-height: 1.5; padding-top: 1px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.r-item-time span { display: block; }
+.r-item-body { display: grid; gap: 6px; min-width: 0; }
+.r-item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.r-item-price { font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .r-item:active { cursor: grabbing; }
 .r-item-optional { border-style: dashed; }
 .r-item-off { opacity: 0.55; }
 .r-item-main { display: grid; gap: 2px; text-align: left; font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; }
 .r-item-main .r-muted { font-size: 12px; }
 .r-item-title { font-size: 14px; font-weight: 500; }
-.r-time { color: var(--accent); margin-right: 6px; font-variant-numeric: tabular-nums; }
 .r-item-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .r-comment { margin: 0; font-size: 13px; font-style: italic; white-space: pre-wrap; }
 .r-item-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -319,8 +323,12 @@ textarea { resize: vertical; }
 .r-tag button { font: inherit; font-size: 10px; background: none; border: 0; padding: 0; color: inherit; opacity: 0.6; cursor: pointer; }
 .r-tag button:hover { opacity: 1; }
 .r-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.r-tags:empty { display: none; }
-.r-app .r-tag-input { font-size: 12px; padding: 3px 6px; margin-top: 4px; border-style: dashed; background: transparent; }
+.r-tag-add {
+  font: inherit; font-size: 13px; line-height: 1; width: 22px; height: 22px; border-radius: 999px;
+  border: 1px dashed var(--border); background: none; color: var(--muted); cursor: pointer;
+}
+.r-tag-add:hover { color: var(--text); border-color: var(--muted); }
+.r-app .r-tag-input { font-size: 12px; padding: 2px 8px; width: 130px; border-radius: 999px; }
 .r-labels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 24px; margin-bottom: 16px; }
 .r-labels h2 { margin-bottom: 8px; }
 .r-overview { display: grid; gap: 8px; font-size: 13px; align-content: start; }
@@ -345,10 +353,15 @@ textarea { resize: vertical; }
 @media (prefers-color-scheme: dark) {
   :root { --night: #1c1e2a; --night-text: #a9afd6; }
 }
-.r-tl-night { background: var(--night); }
-.r-tl-night .r-tl-date { font-size: 12px; color: var(--night-text); padding: 8px 12px 8px 24px; }
+/* Natten legger seg over grensen mellom to dager. */
+.r-tl-day > .r-tl-date, .r-tl-day > .r-cell { padding-top: 22px; padding-bottom: 22px; }
+.r-tl-row:first-child > .r-tl-date, .r-tl-row:first-child > .r-cell { padding-top: 12px; }
+.r-tl-night {
+  position: relative; z-index: 1; margin: -16px 0; border-top: 0;
+  background: var(--night); border-block: 1px dashed var(--night-text);
+}
+.r-tl-night .r-tl-date { font-size: 12px; color: var(--night-text); padding: 8px 12px; }
 .r-tl-night .r-cell { min-height: 0; padding: 6px 8px; }
-.r-tl-night .r-add { justify-self: start; padding: 3px 8px; }
 
 .g-night {
   display: grid; gap: 8px; margin: -8px 0 20px 14px; padding: 10px 0 10px 18px;
