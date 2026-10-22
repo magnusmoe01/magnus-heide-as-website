@@ -38,6 +38,7 @@ export default function Products() {
 
   async function remove(p) {
     if (!confirm(`Slette «${p.title}» fra biblioteket? Elementer i reiser beholdes.`)) return;
+    setEditing(null);
     const { error } = await supabase.from("products").delete().eq("id", p.id);
     if (error) return setError(error.message);
     load();
@@ -95,6 +96,7 @@ export default function Products() {
           customIcons={customIcons(products)}
           onSave={save}
           onCancel={() => setEditing(null)}
+          onDelete={() => remove(editing)}
         />
       )}
     </section>

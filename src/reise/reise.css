@@ -418,8 +418,6 @@ textarea { resize: vertical; }
 .r-image-field { display: grid; gap: 8px; }
 .r-emoji-picker { width: 100%; height: 340px; --border-radius: 8px; --outline-color: var(--accent); }
 
-.g-pay { margin: 0; font-size: 13px; color: var(--warn); }
-.g-pay-paid { color: var(--ok); }
 .g-options { display: grid; gap: 10px; }
 .g-option {
   display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; border: 1px solid var(--border);
@@ -458,7 +456,7 @@ textarea { resize: vertical; }
 
 /* ---------- Veiledende pris, tidsvalg ---------- */
 
-.r-approx { margin-left: 6px; font-size: 0.85em; font-weight: 400; color: var(--muted); opacity: 0.75; }
+.r-approx { margin-left: 6px; font-size: 1em; font-weight: 400; color: var(--muted); opacity: 0.85; }
 .r-pricetag > span { white-space: nowrap; }
 .r-addon-time { color: var(--accent); margin-right: 6px; font-variant-numeric: tabular-nums; font-weight: 400; }
 .r-segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; align-self: end; }
@@ -477,3 +475,25 @@ textarea { resize: vertical; }
 @media (max-width: 560px) {
   .r-timerow { flex-wrap: wrap; }
 }
+
+/* ---------- Tillegg som egne linjer, betaling foran pris ---------- */
+
+.r-item-addon { margin-left: 28px; position: relative; border-left: 2px solid var(--accent); }
+.r-item-addon::before {
+  content: ""; position: absolute; left: -18px; top: -9px; width: 14px; height: 24px;
+  border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); border-bottom-left-radius: 6px;
+}
+.r-addon-mark {
+  font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--accent); margin-right: 6px; vertical-align: 1px;
+}
+.r-item-right { display: inline-flex; align-items: baseline; gap: 8px; flex-shrink: 0; }
+.r-pay {
+  font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 999px; white-space: nowrap;
+  background: var(--warn-bg); color: var(--warn);
+}
+.r-pay-paid { background: var(--ok-bg); color: var(--ok); }
+
+.r-actions-left { display: flex; gap: 8px; margin-right: auto; flex-wrap: wrap; }
+.r-btn-danger { color: var(--bad); }
+.r-btn-danger:hover { border-color: var(--bad); }

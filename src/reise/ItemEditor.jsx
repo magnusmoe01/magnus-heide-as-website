@@ -9,7 +9,9 @@ const newOptionId = () => crypto.randomUUID().slice(0, 8);
 /**
  * Skjema for et element i en reise (mode="item") eller et produkt i biblioteket (mode="product").
  */
-export default function ItemEditor({ value, mode, customIcons = [], onSave, onCancel }) {
+export default function ItemEditor({
+  value, mode, customIcons = [], onSave, onCancel, onAddAddon, onDuplicate, onDelete,
+}) {
   const isItem = mode === "item";
   // Tillegg som hører til et arrangement eller en overnatting.
   const isAddon = isItem && !!value.parent_id;
@@ -44,6 +46,7 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
   // Nye elementer starter med klokkeslett; eksisterende viser det de er lagret med.
   const [timeChoice, setTimeChoice] = useState(() => (value.id ? timeMode(value) : "time"));
   const onBusy = (d) => setUploads((n) => n + d);
+  const busy = saving || uploads > 0;
 
   const set = (k) => (e) =>
     setF((prev) => ({ ...prev, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
@@ -54,9 +57,9 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
   const setOption = (idx, k, v) =>
     setF((prev) => ({ ...prev, options: prev.options.map((o, i) => (i === idx ? { ...o, [k]: v } : o)) }));
 
-  async function submit(e) {
-    e.preventDefault();
-    setSaving(true);
+  const formRef = useRef(null);
+
+  function collect() {
     const out = {
       ...f,
       price: toNum(f.price),
@@ -82,11 +85,25 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
             .map((o) => ({ ...o, title: o.title.trim(), price: toNum(o.price) }))
         : [];
     }
+    return out;
+  }
+
+  /** Lagrer, og kjører eventuelt en handling etterpå (f.eks. lage tillegg). */
+  async function save(then) {
+    if (!formRef.current.reportValidity()) return;
+    setSaving(true);
+    const out = collect();
     try {
       await onSave(out);
+      then?.({ ...value, ...out });
     } finally {
       setSaving(false);
     }
+  }
+
+  function submit(e) {
+    e.preventDefault();
+    save();
   }
 
   const title = isAddon
@@ -95,7 +112,7 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
 
   return (
     <Modal title={title} onClose={onCancel}>
-      <form className="r-form" onSubmit={submit}>
+      <form className="r-form" onSubmit={submit} ref={formRef}>
         <div className="r-row">
           {!isAddon && (
             <label>
@@ -386,10 +403,29 @@ export default function ItemEditor({ value, mode, customIcons = [], onSave, onCa
         )}
 
         <div className="r-actions">
+          {value.id && (
+            <div className="r-actions-left">
+              {onAddAddon && !isAddon && (
+                <button type="button" className="r-btn r-btn-small" disabled={busy} onClick={() => save(onAddAddon)}>
+                  + Tillegg
+                </button>
+              )}
+              {onDuplicate && !isAddon && (
+                <button type="button" className="r-btn r-btn-small" disabled={busy} onClick={() => save(onDuplicate)}>
+                  Dupliser
+                </button>
+              )}
+              {onDelete && (
+                <button type="button" className="r-btn r-btn-small r-btn-danger" disabled={busy} onClick={onDelete}>
+                  Slett
+                </button>
+              )}
+            </div>
+          )}
           <button type="button" className="r-btn" onClick={onCancel}>
             Avbryt
           </button>
-          <button className="r-btn r-btn-primary" disabled={saving || uploads > 0}>
+          <button className="r-btn r-btn-primary" disabled={busy}>
             {saving ? "Lagrer…" : uploads > 0 ? "Laster opp bilde…" : "Lagre"}
           </button>
         </div>

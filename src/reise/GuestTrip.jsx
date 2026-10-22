@@ -194,9 +194,7 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
     <article
       className={`g-item g-${item.track} g-st-${respondable ? item.guest_status : "none"}${item.optional ? " g-optional" : ""}${
         nested ? " g-nested" : ""
-      }${
-        isIncluded(item) ? "" : " g-off"
-      }`}
+      }${item.guest_status === "declined" ? " g-off" : ""}`}
     >
       {item.image_url && <img className="g-img" src={item.image_url} alt="" loading="lazy" />}
       <div className="g-item-head">
@@ -211,14 +209,15 @@ function GuestItem({ item, code, editable, onChange, addonsFor, currency, showDa
             {item.title}
           </h3>
         </div>
-        <PriceTag item={item} currency={currency} className="g-price" />
+        <span className="r-item-right">
+          {showPayment(item) && (
+            <span className={`r-pay${item.paid ? " r-pay-paid" : ""}`}>{paymentText(item)}</span>
+          )}
+          <PriceTag item={item} currency={currency} className="g-price" />
+        </span>
       </div>
 
       {item.description && <p className="g-desc">{item.description}</p>}
-
-      {showPayment(item) && (
-        <p className={`g-pay${item.paid ? " g-pay-paid" : ""}`}>{paymentText(item)}</p>
-      )}
 
       {(item.location || item.contact) && (
         <dl className="g-facts">

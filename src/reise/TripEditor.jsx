@@ -137,7 +137,8 @@ export default function TripEditor({ id, onBack }) {
   }
 
   async function remove(item) {
-    if (!confirm(`Fjerne «${item.title}» fra reisen?`)) return;
+    if (!confirm(`Fjerne «${item.title}» fra reisen?`)) return false;
+    setEditing(null);
     // Tillegg under elementet slettes også (on delete cascade).
     setItems((prev) => prev.filter((i) => i.id !== item.id && i.parent_id !== item.id));
     const { error } = await supabase.from("trip_items").delete().eq("id", item.id);
@@ -226,28 +227,33 @@ export default function TripEditor({ id, onBack }) {
           </div>
         ))}
         {list.map((item) => (
-          <ItemCard
-            key={item.id}
-            item={item}
-            onEdit={() => setEditing(item)}
-            onDuplicate={() => duplicate(item)}
-            onRemove={() => remove(item)}
-            onResetResponse={() => patchItem(item.id, RESET_RESPONSE)}
-            currency={trip.currency}
-            onRemoveOptional={() => patchItem(item.id, NOT_OPTIONAL)}
-            addons={items.filter((i) => i.parent_id === item.id).sort(sortItems)}
-            onAddAddon={() =>
-              setEditing({ parent_id: item.id, track: item.track, date: item.date, optional: true })
-            }
-            onEditAddon={(addon) => setEditing(addon)}
-            onRemoveAddon={(addon) => remove(addon)}
-            onResetAddon={(addon) => patchItem(addon.id, RESET_RESPONSE)}
-            onDragStart={() => setDragId(item.id)}
-            onDragEnd={() => {
-              setDragId(null);
-              setDropTarget(null);
-            }}
-          />
+          <Fragment key={item.id}>
+            <ItemCard
+              item={item}
+              currency={trip.currency}
+              onEdit={() => setEditing(item)}
+              onResetResponse={() => patchItem(item.id, RESET_RESPONSE)}
+              onDragStart={() => setDragId(item.id)}
+              onDragEnd={() => {
+                setDragId(null);
+                setDropTarget(null);
+              }}
+            />
+            {/* Tillegg som egne linjer med innrykk under arrangementet. */}
+            {items
+              .filter((i) => i.parent_id === item.id)
+              .sort(sortItems)
+              .map((addon) => (
+                <ItemCard
+                  key={addon.id}
+                  item={addon}
+                  isAddon
+                  currency={trip.currency}
+                  onEdit={() => setEditing(addon)}
+                  onResetResponse={() => patchItem(addon.id, RESET_RESPONSE)}
+                />
+              ))}
+          </Fragment>
         ))}
         <button className="r-add" onClick={() => setPicking({ date, track })}>
           + {TRACKS[track]}
@@ -454,6 +460,11 @@ export default function TripEditor({ id, onBack }) {
           customIcons={customIcons(products, items)}
           onSave={saveItem}
           onCancel={() => setEditing(null)}
+          onAddAddon={(item) =>
+            setEditing({ parent_id: item.id, track: item.track, date: item.date, optional: true })
+          }
+          onDuplicate={(item) => duplicate(item)}
+          onDelete={() => remove(editing)}
         />
       )}
     </section>
@@ -461,19 +472,19 @@ export default function TripEditor({ id, onBack }) {
 }
 
 function ItemCard({
-  item, onEdit, onDuplicate, onRemove, onRemoveOptional,
-  onResetResponse, onDragStart, onDragEnd,
-  addons, onAddAddon, onEditAddon, onRemoveAddon, onResetAddon, currency,
+  item, isAddon, currency, onEdit, onResetResponse, onDragStart, onDragEnd,
 }) {
+  const responded = item.guest_status !== "pending";
+  const option = selectedOption(item);
   return (
     <div
-      className={`r-item${item.optional ? " r-item-optional" : ""}${
-        !isIncluded(item) ? " r-item-off" : ""
+      className={`r-item${isAddon ? " r-item-addon" : ""}${item.optional ? " r-item-optional" : ""}${
+        item.guest_status === "declined" ? " r-item-off" : ""
       }`}
-      draggable
+      draggable={!isAddon}
       onClick={(e) => {
-        // Hele kortet åpner redigering, unntatt knapper og tilleggene (de har egne handlinger).
-        if (e.target.closest("button, a, input, select, .r-addons")) return;
+        // Hele kortet åpner redigering, unntatt knapper og lenker.
+        if (e.target.closest("button, a, input, select")) return;
         onEdit();
       }}
       onDragStart={(e) => {
@@ -495,88 +506,44 @@ function ItemCard({
       <button className="r-item-main" onClick={onEdit}>
         <span className="r-item-head">
           <span className="r-item-title">
+            {isAddon && <span className="r-addon-mark">Tillegg</span>}
             <Icon value={item.icon} />
             {item.title}
           </span>
-          <PriceTag item={item} currency={currency} className="r-item-price" />
+          <span className="r-item-right">
+            {showPayment(item) && (
+              <span className={`r-pay${item.paid ? " r-pay-paid" : ""}`}>{paymentText(item)}</span>
+            )}
+            <PriceTag item={item} currency={currency} className="r-item-price" />
+          </span>
         </span>
         <span className="r-muted">
           {[
-            item.track === "stay" && `${item.nights || 1} ${item.nights > 1 ? "netter" : "natt"}`,
+            !isAddon && item.track === "stay" && `${item.nights || 1} ${item.nights > 1 ? "netter" : "natt"}`,
             item.links?.length > 0 && `${item.links.length} lenke${item.links.length > 1 ? "r" : ""}`,
             item.image_url && "bilde",
+            item.optional && item.options?.length > 0 && !option && `${item.options.length} valgmuligheter`,
           ]
             .filter(Boolean)
             .join(" · ")}
         </span>
       </button>
-      <div className="r-item-badges">
-        {item.optional && <span className="r-badge r-badge-extra">Tillegg</span>}
-        {(item.ask_guest || item.optional || item.guest_status !== "pending") && (
-          <StatusBadge status={item.guest_status} />
-        )}
-        {item.guest_status !== "pending" && (
-          <button className="r-linkbtn" onClick={onResetResponse}>
-            {item.guest_status === "accepted" ? "Trekk tilbake godkjenning" : "Nullstill svar"}
-          </button>
-        )}
-        {showPayment(item) && (
-          <span className={`r-badge ${item.paid ? "r-status-accepted" : "r-status-question"}`}>
-            {paymentText(item)}
-          </span>
-        )}
-      </div>
-      {selectedOption(item) && <p className="r-comment">Valgt: {selectedOption(item).title}</p>}
-      {item.optional && item.options?.length > 0 && !selectedOption(item) && (
-        <p className="r-muted r-small r-flush">{item.options.length} valgmuligheter</p>
-      )}
-      {item.guest_comment && <p className="r-comment">«{item.guest_comment}»</p>}
-      {addons.length > 0 && (
-        <div className="r-addons">
-          <span className="r-addons-label">Tillegg gjesten kan velge</span>
-          {addons.map((a) => (
-            <div key={a.id} className={`r-addon${isIncluded(a) ? "" : " r-item-off"}`}>
-              <button className="r-item-main" onClick={() => onEditAddon(a)}>
-                <span className="r-item-head">
-                  <span className="r-item-title">
-                    {formatTime(a) && <span className="r-addon-time">{formatTime(a)}</span>}
-                    <Icon value={a.icon} />
-                    {a.title}
-                  </span>
-                  <PriceTag item={a} currency={currency} className="r-item-price" />
-                </span>
-              </button>
-              <div className="r-item-badges">
-                <StatusBadge status={a.guest_status} />
-                {selectedOption(a) && <span className="r-badge">Valgt: {selectedOption(a).title}</span>}
-                {!selectedOption(a) && a.options?.length > 0 && (
-                  <span className="r-muted r-small">{a.options.length} valg</span>
-                )}
-                {showPayment(a) && (
-                  <span className={`r-badge ${a.paid ? "r-status-accepted" : "r-status-question"}`}>
-                    {paymentText(a)}
-                  </span>
-                )}
-                {a.guest_status !== "pending" && (
-                  <button className="r-linkbtn" onClick={() => onResetAddon(a)}>
-                    {a.guest_status === "accepted" ? "Trekk tilbake valget" : "Nullstill svar"}
-                  </button>
-                )}
-                <button className="r-linkbtn r-danger" onClick={() => onRemoveAddon(a)}>Slett</button>
-              </div>
-              {a.guest_comment && <p className="r-comment">«{a.guest_comment}»</p>}
-            </div>
-          ))}
+      {(item.optional && !isAddon) || item.ask_guest || responded ? (
+        <div className="r-item-badges">
+          {item.optional && !isAddon && <span className="r-badge r-badge-extra">Tillegg</span>}
+          {/* «Venter på svar» bare når admin har bedt om bekreftelse. */}
+          {(item.ask_guest || responded) && <StatusBadge status={item.guest_status} />}
+          {responded && (
+            <button className="r-linkbtn" onClick={onResetResponse}>
+              {item.guest_status !== "accepted"
+                ? "Nullstill svar"
+                : item.optional ? "Trekk tilbake valget" : "Trekk tilbake godkjenning"}
+            </button>
+          )}
         </div>
-      )}
-      <div className="r-item-actions">
-        <button className="r-linkbtn" onClick={onAddAddon}>+ Tillegg</button>
-        <button className="r-linkbtn" onClick={onDuplicate}>Dupliser</button>
-        {item.optional && (
-          <button className="r-linkbtn" onClick={onRemoveOptional}>Ikke tillegg</button>
-        )}
-        <button className="r-linkbtn r-danger" onClick={onRemove}>Slett</button>
-      </div>
+      ) : null}
+      {option && <p className="r-comment">Valgt: {option.title}</p>}
+      {item.guest_comment && <p className="r-comment">«{item.guest_comment}»</p>}
       </div>
     </div>
   );
